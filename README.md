@@ -13,7 +13,12 @@ The current feature plan includes:
 *   **Language:** Kotlin
 *   **UI:** Jetpack Compose
 *   **Backend:** Firebase Realtime Database
-*   **Authentication:** Custom user / password authentication with md5 hashing
+*   **Authentication:** Custom user / password authentication with Md5 hashing
+
+### Notice on security
+
+The project is intended for educational purposes only, and thus do not use firebase authentification by design.
+Md5 password hashing is not secure enough for production applications and should be replaced in production environments.
 
 ## Project Structure
 
