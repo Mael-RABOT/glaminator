@@ -60,6 +60,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.28.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Firebase
     implementation(platform(libs.firebase.bom))

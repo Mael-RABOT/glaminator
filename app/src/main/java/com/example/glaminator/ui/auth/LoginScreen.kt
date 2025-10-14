@@ -3,18 +3,25 @@ package com.example.glaminator.ui.auth
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.glaminator.data.CurrentUser
+import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.Primary
 import com.example.glaminator.utils.ValidationUtils
 import com.example.glaminator.viewmodel.UserViewModel
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +34,7 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
 
     LaunchedEffect(user) {
         if (user != null) {
+            CurrentUser.user = user
             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
             onLoginSuccess()
         }
@@ -38,42 +46,55 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        TextField(
-            value = emailOrUsername,
-            onValueChange = { emailOrUsername = it },
-            label = { Text("Email or Username") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = {
-            val errorMessage = ValidationUtils.validateLogin(emailOrUsername, password)
-            if (errorMessage != null) {
-                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-            } else {
-                val hashedPassword = ValidationUtils.toMD5(password)
-                userViewModel.login(emailOrUsername, hashedPassword)
+    GlaminatorTheme {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("GLAMINATOR", style = MaterialTheme.typography.headlineLarge, color = Primary)
+                Spacer(modifier = Modifier.height(32.dp))
+                OutlinedTextField(
+                    value = emailOrUsername,
+                    onValueChange = { emailOrUsername = it },
+                    label = { Text("Email or Username") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = {
+                        val errorMessage = ValidationUtils.validateLogin(emailOrUsername, password)
+                        if (errorMessage != null) {
+                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                        } else {
+                            val hashedPassword = ValidationUtils.toMD5(password)
+                            userViewModel.login(emailOrUsername, hashedPassword)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                ) {
+                    Text("Login")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onRegisterClick, modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                ) {
+                    Text("Go to Register", color = Primary)
+                }
             }
-        }) {
-            Text("Login")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRegisterClick) {
-            Text("Go to Register")
         }
     }
 }

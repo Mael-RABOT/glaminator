@@ -41,4 +41,8 @@ object ValidationUtils {
         }
         return null
     }
+
+    fun isValidPostContent(content: String): Boolean {
+        return content.isNotBlank()
+    }
 }
