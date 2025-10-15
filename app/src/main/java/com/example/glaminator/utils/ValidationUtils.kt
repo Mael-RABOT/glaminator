@@ -42,6 +42,10 @@ object ValidationUtils {
         return null
     }
 
+    fun isValidPostTitle(title: String): Boolean {
+        return title.isNotBlank() && title.length <= 100
+    }
+
     fun isValidPostContent(content: String): Boolean {
         return content.isNotBlank()
     }

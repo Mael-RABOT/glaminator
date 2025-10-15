@@ -1,21 +1,27 @@
 package com.example.glaminator.ui.home
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -45,6 +52,7 @@ import coil.compose.AsyncImage
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
 import com.example.glaminator.ui.post.CreatePostActivity
+import com.example.glaminator.ui.post.PostDetailActivity
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
@@ -87,7 +95,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { HomeViewModel().createFixtures() /* TODO: Replace with implementation */ }) {
+                        IconButton(onClick = { /* TODO: Implement */ }) {
                             Icon(Icons.Filled.Search, contentDescription = "Search", tint = Primary)
                         }
                     },
@@ -123,9 +131,16 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(posts) { post ->
-                            PostItem(post = post)
-                            Divider()
+                        itemsIndexed(posts) { idx, post ->
+                            PostItem(post = post) {
+                                val intent = Intent(context, PostDetailActivity::class.java).apply {
+                                    putExtra("POST_ID", post.id)
+                                }
+                                context.startActivity(intent)
+                            }
+                            if (idx < posts.count() -1) {
+                                Divider()
+                            }
                         }
                     }
                 }
@@ -135,21 +150,48 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
 }
 
 @Composable
-fun PostItem(post: Post) {
+fun PostItem(post: Post, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(200.dp)
             .padding(8.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            Text(text = post.content, style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            // TODO: Display images & comments
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Comments section", style = MaterialTheme.typography.labelSmall)
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = post.imageUrls.firstOrNull(),
+                contentDescription = "Post Image",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.7f)
+                            )
+                        )
+                    )
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Text(text = post.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Likes",
+                        tint = Color.Red
+                    )
+                    Text(text = " ${post.likes.size}", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                }
+            }
         }
     }
 }
