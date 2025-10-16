@@ -56,6 +56,7 @@ import com.example.glaminator.ui.post.PostDetailActivity
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
+import com.example.glaminator.ui.user.UserManagementActivity
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
@@ -90,7 +91,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                 TopAppBar(
                     title = { Text(text = CurrentUser.user?.username ?: "Glaminator", color = Primary) },
                     navigationIcon = {
-                        IconButton(onClick = { /* TODO: Implement account navigation */ }) {
+                        IconButton(onClick = { context.startActivity(Intent(context, UserManagementActivity::class.java)) }) {
                             Icon(Icons.Filled.AccountCircle, contentDescription = "Account", tint = Primary)
                         }
                     },

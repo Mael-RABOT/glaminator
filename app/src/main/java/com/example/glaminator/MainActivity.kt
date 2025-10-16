@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("register") {
                         RegisterScreen(
-                            onRegisterSuccess = { navController.navigate("home") },
+                            onRegisterSuccess = { navController.navigate("login") }, // Force login to validate account
                             onLoginClick = { navController.navigate("login") })
                     }
                     composable("home") {
