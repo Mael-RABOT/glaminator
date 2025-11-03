@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             GlaminatorTheme {
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "register") {
+                NavHost(navController = navController, startDestination = "login") {
                     composable("login") {
                         LoginScreen(
                             onRegisterClick = { navController.navigate("register") },
