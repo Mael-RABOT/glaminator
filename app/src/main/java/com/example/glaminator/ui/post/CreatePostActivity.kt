@@ -5,15 +5,22 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -47,6 +54,7 @@ class CreatePostActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePostScreen(onPostCreated: () -> Unit) {
+    var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     val context = LocalContext.current
     val postRepository = PostRepository()
@@ -55,28 +63,46 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { Text("Create Post", color = Primary) },
+                navigationIcon = {
+                    IconButton(onClick = onPostCreated) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Primary)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Background
                 )
             )
         }
-    ) {
+    ) { paddingValues ->
         Column(
-            modifier = Modifier.padding(it).padding(16.dp)
+            modifier = Modifier.padding(paddingValues).padding(16.dp)
         ) {
             OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Title") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = !ValidationUtils.isValidPostTitle(title),
+                colors = OutlinedTextFieldDefaults.colors()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextField(
                 value = content,
                 onValueChange = { content = it },
                 label = { Text("What's on your mind?") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
                 isError = !ValidationUtils.isValidPostContent(content),
-                colors = OutlinedTextFieldDefaults.colors()
+                colors = OutlinedTextFieldDefaults.colors(),
+                singleLine = false,
+                maxLines = Int.MAX_VALUE
             )
             Button(
                 onClick = {
                     val userId = CurrentUser.user?.id
-                    if (userId != null && ValidationUtils.isValidPostContent(content)) {
-                        val post = Post(userId = userId, content = content)
+                    if (userId != null && ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content)) {
+                        val post = Post(userId = userId, title = title, content = content)
                         postRepository.createPost(post).addOnSuccessListener {
                             Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
                             onPostCreated()
@@ -84,11 +110,11 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
                             Toast.makeText(context, "Failed to create post.", Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(context, "Post content is empty or too long, or user is not logged in.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Post title or content is empty or too long, or user is not logged in.", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                enabled = ValidationUtils.isValidPostContent(content),
+                enabled = ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
                 Text("Post", color = Color.Black)

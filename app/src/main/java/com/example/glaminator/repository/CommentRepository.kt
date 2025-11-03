@@ -6,6 +6,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 
 class CommentRepository {
@@ -19,8 +20,8 @@ class CommentRepository {
         return databaseReference.child(newCommentId).setValue(newComment)
     }
 
-    fun getCommentsForPost(postId: String): DatabaseReference {
-        return databaseReference.orderByChild("postId").equalTo(postId).ref
+    fun getCommentsForPost(postId: String): Query {
+        return databaseReference.orderByChild("postId").equalTo(postId)
     }
 
     fun getComment(id: String): DatabaseReference {
