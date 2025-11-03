@@ -32,6 +32,11 @@
             android:exported="false"
             android:label="Post Detail"
             android:theme="@style/Theme.Glaminator" />
+        <activity
+            android:name=".ui.user.UserManagementActivity"
+            android:exported="false"
+            android:label="User Profile"
+            android:theme="@style/Theme.Glaminator" />
     </application>
 
 </manifest>
