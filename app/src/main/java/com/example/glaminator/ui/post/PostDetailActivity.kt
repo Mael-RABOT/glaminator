@@ -1,6 +1,8 @@
 package com.example.glaminator.ui.post
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -32,11 +34,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.RewardType
 import com.example.glaminator.model.User
+import com.example.glaminator.model.UserReward
 import com.example.glaminator.repository.CommentRepository
 import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.repository.UserRepository
@@ -98,9 +103,9 @@ class PostDetailActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(text = it.content, style = MaterialTheme.typography.bodyLarge)
                             Spacer(modifier = Modifier.height(16.dp))
-                            LikeButton(post = it, postRepository = postRepository)
+                            LikeButton(post = it, postRepository = postRepository, userRepository = UserRepository())
                             Spacer(modifier = Modifier.height(16.dp))
-                            CommentSection(postId = postId, comments = comments, commentRepository = commentRepository)
+                            CommentSection(postId = postId, comments = comments, commentRepository = commentRepository, userRepository = UserRepository())
                         }
                     }
                 }
@@ -110,14 +115,33 @@ class PostDetailActivity : ComponentActivity() {
 }
 
 @Composable
-fun LikeButton(post: Post, postRepository: PostRepository) {
+fun LikeButton(post: Post, postRepository: PostRepository, userRepository: UserRepository) {
     val isLiked = CurrentUser.user?.id in post.likes
+    val context = LocalContext.current
+
     IconButton(onClick = {
         val userId = CurrentUser.user?.id ?: ""
         if (isLiked) {
             postRepository.removeLikeFromPost(post.id, userId)
         } else {
-            postRepository.addLikeToPost(post.id, userId)
+            val user = CurrentUser.user
+            val likeReward = user?.rewards?.find { it.type == RewardType.LIKE }?.quantity ?: 0
+            if (likeReward > 0) {
+                postRepository.addLikeToPost(post.id, userId)
+                user?.let {
+                    val newRewards = it.rewards.map { reward ->
+                        if (reward.type == RewardType.LIKE) {
+                            reward.copy(quantity = reward.quantity - 1)
+                        } else {
+                            reward
+                        }
+                    }
+                    CurrentUser.user = it.copy(rewards = newRewards)
+                    userRepository.updateUserRewards(userId, newRewards)
+                }
+            } else {
+                Toast.makeText(context, "You don't have enough likes. Try a pull!", Toast.LENGTH_SHORT).show()
+            }
         }
     }) {
         Icon(
@@ -129,8 +153,9 @@ fun LikeButton(post: Post, postRepository: PostRepository) {
 }
 
 @Composable
-fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository) {
+fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository, userRepository: UserRepository) {
     var newComment by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Comments", style = MaterialTheme.typography.headlineSmall)
@@ -149,13 +174,32 @@ fun CommentSection(postId: String, comments: List<Comment>, commentRepository: C
                 modifier = Modifier.weight(1f)
             )
             Button(onClick = {
-                val comment = Comment(
-                    postId = postId,
-                    userId = CurrentUser.user?.id ?: "Anonymous",
-                    content = newComment
-                )
-                commentRepository.createComment(comment)
-                newComment = ""
+                val userId = CurrentUser.user?.id ?: "Anonymous"
+                val user = CurrentUser.user
+                val commentReward = user?.rewards?.find { it.type == RewardType.COMMENT }?.quantity ?: 0
+
+                if (commentReward > 0) {
+                    val comment = Comment(
+                        postId = postId,
+                        userId = userId,
+                        content = newComment
+                    )
+                    commentRepository.createComment(comment)
+                    newComment = ""
+                    user?.let {
+                        val newRewards = it.rewards.map { reward ->
+                            if (reward.type == RewardType.COMMENT) {
+                                reward.copy(quantity = reward.quantity - 1)
+                            } else {
+                                reward
+                            }
+                        }
+                        CurrentUser.user = it.copy(rewards = newRewards)
+                        userRepository.updateUserRewards(userId, newRewards)
+                    }
+                } else {
+                    Toast.makeText(context, "You don't have enough comment rewards. Try a pull!", Toast.LENGTH_SHORT).show()
+                }
             }) {
                 Text("Post")
             }

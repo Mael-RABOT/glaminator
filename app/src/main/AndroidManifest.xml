@@ -37,6 +37,11 @@
             android:exported="false"
             android:label="User Profile"
             android:theme="@style/Theme.Glaminator" />
+        <activity
+            android:name=".ui.pull.PullActivity"
+            android:exported="false"
+            android:label="Pull"
+            android.theme="@style/Theme.Glaminator" />
     </application>
 
 </manifest>
