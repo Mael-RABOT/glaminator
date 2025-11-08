@@ -1,6 +1,7 @@
 package com.example.glaminator.ui.pull
 
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,8 +28,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,7 +47,10 @@ import coil.compose.AsyncImage
 import com.example.glaminator.model.Reward
 import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val PULL_COOLDOWN_MINUTES = 1
 
 class PullActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +72,8 @@ class PullActivity : ComponentActivity() {
 @Composable
 fun PullScreen() {
     val activity = (LocalContext.current as? Activity)
+    val context = LocalContext.current
+    val sharedPreferences = remember { context.getSharedPreferences("glaminator_prefs", Context.MODE_PRIVATE) }
     val rewardRepository = remember { RewardRepository() }
     var tapsRemaining by remember { mutableIntStateOf(10) }
     var isOpened by remember { mutableStateOf(false) }
@@ -73,6 +81,25 @@ fun PullScreen() {
     val coroutineScope = rememberCoroutineScope()
     val rotation = remember { Animatable(0f) }
     val scale = remember { Animatable(1f) }
+    var lastPullTimestamp by remember {
+        mutableLongStateOf(sharedPreferences.getLong("last_pull_timestamp", 0L))
+    }
+    var cooldownRemaining by remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(Unit, lastPullTimestamp) {
+        val cooldownMillis = PULL_COOLDOWN_MINUTES * 60 * 1000L
+        val currentTime = System.currentTimeMillis()
+        val timeSinceLastPull = currentTime - lastPullTimestamp
+        if (timeSinceLastPull < cooldownMillis) {
+            cooldownRemaining = (cooldownMillis - timeSinceLastPull) / 1000
+            while (cooldownRemaining > 0) {
+                delay(1000L)
+                cooldownRemaining--
+            }
+        }
+    }
+
+    val isOnCooldown = cooldownRemaining > 0
 
     fun shake() {
         coroutineScope.launch {
@@ -108,7 +135,16 @@ fun PullScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            if (isOpened) {
+            if (isOnCooldown) {
+                Text("Next pull available in:", style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                val minutes = cooldownRemaining / 60
+                val seconds = cooldownRemaining % 60
+                Text(
+                    String.format("%02d:%02d", minutes, seconds),
+                    style = MaterialTheme.typography.displaySmall
+                )
+            } else if (isOpened) {
                 reward?.let {
                     Text("Congratulations!", style = MaterialTheme.typography.displaySmall)
                     Text("You got:", style = MaterialTheme.typography.headlineSmall)
@@ -116,7 +152,13 @@ fun PullScreen() {
                     Text("${it.quantity} ${it.type}(s)", style = MaterialTheme.typography.headlineMedium)
                     Text("Rarity: ${it.rarity}", style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.height(32.dp))
-                    Button(onClick = { activity?.finish() }) {
+                    Button(onClick = {
+                        val newTimestamp = System.currentTimeMillis()
+                        sharedPreferences.edit().putLong("last_pull_timestamp", newTimestamp).apply()
+                        lastPullTimestamp = newTimestamp
+                        isOpened = false
+                        tapsRemaining = 10
+                    }) {
                         Text("Awesome!")
                     }
                 }
@@ -130,7 +172,7 @@ fun PullScreen() {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            if (!isOpened) {
+            if (!isOpened && !isOnCooldown) {
                  Box(
                     modifier = Modifier
                         .size(250.dp)
