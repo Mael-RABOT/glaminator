@@ -1,9 +1,11 @@
 package com.example.glaminator.ui.auth
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -25,9 +27,10 @@ import androidx.compose.material3.Surface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () -> Unit, onLoginSuccess: () -> Unit) {
+fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () -> Unit, onLoginSuccess: (Boolean) -> Unit) {
     var emailOrUsername by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(false) }
     val user by userViewModel.user.collectAsState()
     val error by userViewModel.error.collectAsState()
     val context = LocalContext.current
@@ -36,7 +39,7 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
         if (user != null) {
             CurrentUser.user = user
             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-            onLoginSuccess()
+            onLoginSuccess(rememberMe)
         }
     }
 
@@ -71,7 +74,21 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { rememberMe = !rememberMe }
+                ) {
+                    Checkbox(
+                        checked = rememberMe,
+                        onCheckedChange = { rememberMe = it }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Remember me")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
                         val errorMessage = ValidationUtils.validateLogin(emailOrUsername, password)

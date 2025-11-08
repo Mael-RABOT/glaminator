@@ -1,5 +1,6 @@
 package com.example.glaminator
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,11 +21,23 @@ class MainActivity : ComponentActivity() {
         setContent {
             GlaminatorTheme {
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "login") {
+                val sharedPreferences = getSharedPreferences("glaminator_prefs", Context.MODE_PRIVATE)
+                val rememberMe = sharedPreferences.getBoolean("remember_me", false)
+                val startDestination = if (rememberMe) "home" else "login"
+
+                NavHost(navController = navController, startDestination = startDestination) {
                     composable("login") {
                         LoginScreen(
                             onRegisterClick = { navController.navigate("register") },
-                            onLoginSuccess = { navController.navigate("home") })
+                            onLoginSuccess = { shouldRemember ->
+                                if (shouldRemember) {
+                                    with(sharedPreferences.edit()) {
+                                        putBoolean("remember_me", true)
+                                        apply()
+                                    }
+                                }
+                                navController.navigate("home")
+                            })
                     }
                     composable("register") {
                         RegisterScreen(
