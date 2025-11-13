@@ -132,7 +132,7 @@ fun CreatePostScreen() {
 
             Button(
                 onClick = {
-                    if (rewardRepository.consumeReward(RewardType.POST, 1)) {
+                    if (rewardRepository.consumeReward(context, RewardType.POST, 1)) {
                         coroutineScope.launch {
                             CurrentUser.user?.let { user ->
                                 val post = Post(

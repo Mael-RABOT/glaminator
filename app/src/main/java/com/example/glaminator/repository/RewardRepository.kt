@@ -1,5 +1,6 @@
 package com.example.glaminator.repository
 
+import android.content.Context
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Rarity
 import com.example.glaminator.model.Reward
@@ -50,7 +51,12 @@ class RewardRepository {
         }
     }
 
-    fun consumeReward(rewardType: RewardType, quantity: Int): Boolean {
+    fun consumeReward(context: Context, rewardType: RewardType, quantity: Int): Boolean {
+        val glaminatorPrefs = context.getSharedPreferences("glaminator_prefs", Context.MODE_PRIVATE)
+        if (glaminatorPrefs.getBoolean("gacha_disabled", false)) {
+            return true
+        }
+
         val user = CurrentUser.user ?: return false
 
         val userReward = user.rewards.find { it.type == rewardType }

@@ -44,6 +44,7 @@ import com.example.glaminator.model.User
 import com.example.glaminator.model.UserReward
 import com.example.glaminator.repository.CommentRepository
 import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.google.firebase.database.DataSnapshot
@@ -103,9 +104,9 @@ class PostDetailActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(text = it.content, style = MaterialTheme.typography.bodyLarge)
                             Spacer(modifier = Modifier.height(16.dp))
-                            LikeButton(post = it, postRepository = postRepository, userRepository = UserRepository())
+                            LikeButton(post = it, postRepository = postRepository)
                             Spacer(modifier = Modifier.height(16.dp))
-                            CommentSection(postId = postId, comments = comments, commentRepository = commentRepository, userRepository = UserRepository())
+                            CommentSection(postId = postId, comments = comments, commentRepository = commentRepository)
                         }
                     }
                 }
@@ -115,32 +116,20 @@ class PostDetailActivity : ComponentActivity() {
 }
 
 @Composable
-fun LikeButton(post: Post, postRepository: PostRepository, userRepository: UserRepository) {
+fun LikeButton(post: Post, postRepository: PostRepository) {
     val isLiked = CurrentUser.user?.id in post.likes
     val context = LocalContext.current
+    val rewardRepository = remember { RewardRepository() }
 
     IconButton(onClick = {
         val userId = CurrentUser.user?.id ?: ""
         if (isLiked) {
             postRepository.removeLikeFromPost(post.id, userId)
         } else {
-            val user = CurrentUser.user
-            val likeReward = user?.rewards?.find { it.type == RewardType.LIKE }?.quantity ?: 0
-            if (likeReward > 0) {
+            if (rewardRepository.consumeReward(context, RewardType.LIKE, 1)) {
                 postRepository.addLikeToPost(post.id, userId)
-                user?.let {
-                    val newRewards = it.rewards.map { reward ->
-                        if (reward.type == RewardType.LIKE) {
-                            reward.copy(quantity = reward.quantity - 1)
-                        } else {
-                            reward
-                        }
-                    }
-                    CurrentUser.user = it.copy(rewards = newRewards)
-                    userRepository.updateUserRewards(userId, newRewards)
-                }
             } else {
-                Toast.makeText(context, "You don't have enough likes. Try a pull!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "You don\'t have enough likes. Try a pull!", Toast.LENGTH_SHORT).show()
             }
         }
     }) {
@@ -153,9 +142,10 @@ fun LikeButton(post: Post, postRepository: PostRepository, userRepository: UserR
 }
 
 @Composable
-fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository, userRepository: UserRepository) {
+fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository) {
     var newComment by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val rewardRepository = remember { RewardRepository() }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Comments", style = MaterialTheme.typography.headlineSmall)
@@ -175,10 +165,8 @@ fun CommentSection(postId: String, comments: List<Comment>, commentRepository: C
             )
             Button(onClick = {
                 val userId = CurrentUser.user?.id ?: "Anonymous"
-                val user = CurrentUser.user
-                val commentReward = user?.rewards?.find { it.type == RewardType.COMMENT }?.quantity ?: 0
 
-                if (commentReward > 0) {
+                if (rewardRepository.consumeReward(context, RewardType.COMMENT, 1)) {
                     val comment = Comment(
                         postId = postId,
                         userId = userId,
@@ -186,19 +174,8 @@ fun CommentSection(postId: String, comments: List<Comment>, commentRepository: C
                     )
                     commentRepository.createComment(comment)
                     newComment = ""
-                    user?.let {
-                        val newRewards = it.rewards.map { reward ->
-                            if (reward.type == RewardType.COMMENT) {
-                                reward.copy(quantity = reward.quantity - 1)
-                            } else {
-                                reward
-                            }
-                        }
-                        CurrentUser.user = it.copy(rewards = newRewards)
-                        userRepository.updateUserRewards(userId, newRewards)
-                    }
                 } else {
-                    Toast.makeText(context, "You don't have enough comment rewards. Try a pull!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "You don\'t have enough comment rewards. Try a pull!", Toast.LENGTH_SHORT).show()
                 }
             }) {
                 Text("Post")

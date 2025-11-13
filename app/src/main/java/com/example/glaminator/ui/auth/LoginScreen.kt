@@ -1,5 +1,7 @@
 package com.example.glaminator.ui.auth
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +26,8 @@ import com.example.glaminator.utils.ValidationUtils
 import com.example.glaminator.viewmodel.UserViewModel
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,11 +38,18 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
     val user by userViewModel.user.collectAsState()
     val error by userViewModel.error.collectAsState()
     val context = LocalContext.current
+    val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
 
     LaunchedEffect(user) {
         if (user != null) {
             CurrentUser.user = user
             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
+            if (rememberMe) {
+                with(sharedPreferences.edit()) {
+                    putString("user_id", user!!.id)
+                    apply()
+                }
+            }
             onLoginSuccess(rememberMe)
         }
     }
