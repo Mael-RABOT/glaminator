@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
@@ -47,6 +49,8 @@ import com.example.glaminator.model.RewardType
 import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.titles
 import kotlinx.coroutines.launch
 
 class CreatePostActivity : ComponentActivity() {
@@ -85,12 +89,15 @@ fun CreatePostScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create a Post") },
+                title = { Text("Create a Post", color = titles) },
                 navigationIcon = {
                     IconButton(onClick = { activity?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = titles)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ScaffoldBackground
+                )
             )
         }
     ) { paddingValues ->
@@ -152,7 +159,7 @@ fun CreatePostScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 enabled = title.isNotBlank() && content.isNotBlank()
             ) {
-                Text("Create Post")
+                Text("Create Post" , fontSize = 25.sp)
             }
         }
     }

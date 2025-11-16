@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -58,6 +59,9 @@ import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.Surface
+import com.example.glaminator.ui.theme.titles
 import com.example.glaminator.ui.user.UserManagementActivity
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -89,24 +93,25 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
 
     GlaminatorTheme {
         Scaffold(
+
             topBar = {
                 TopAppBar(
-                    title = { Text(text = CurrentUser.user?.username ?: "Glaminator", color = Primary) },
+                    title = { Text(text = CurrentUser.user?.username ?: "Glaminator", color = titles,  fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = { context.startActivity(Intent(context, UserManagementActivity::class.java)) }) {
-                            Icon(Icons.Filled.AccountCircle, contentDescription = "Account", tint = Primary)
+                            Icon(Icons.Filled.AccountCircle, contentDescription = "Account", tint = titles)
                         }
                     },
                     actions = {
                         IconButton(onClick = { context.startActivity(Intent(context, PullActivity::class.java)) }) {
-                            Icon(Icons.Filled.CardGiftcard, contentDescription = "Pull", tint = Primary)
+                            Icon(Icons.Filled.CardGiftcard, contentDescription = "Pull", tint = titles)
                         }
                         IconButton(onClick = { /* TODO: Implement */ }) {
-                            Icon(Icons.Filled.Search, contentDescription = "Search", tint = Primary)
+                            Icon(Icons.Filled.Search, contentDescription = "Search", tint = titles)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Background
+                        containerColor = ScaffoldBackground
                     )
                 )
             },
@@ -117,7 +122,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     },
                     containerColor = Primary
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Make a Post", tint = Color.Black)
+                    Icon(Icons.Filled.Add, contentDescription = "Make a Post", tint = Color.White)
                 }
             }
         ) { innerPadding ->

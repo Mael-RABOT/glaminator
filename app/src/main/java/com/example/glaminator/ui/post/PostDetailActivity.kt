@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
@@ -47,10 +51,14 @@ import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.titles
+import com.example.glaminator.ui.theme.heart
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
+
 
 class PostDetailActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -84,12 +92,15 @@ class PostDetailActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text(post?.title ?: "Post Details") },
+                            title = { Text(post?.title ?: "Post Details", color = titles) },
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
-                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = titles)
                                 }
-                            }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = ScaffoldBackground
+                            )
                         )
                     }
                 ) {
@@ -136,7 +147,7 @@ fun LikeButton(post: Post, postRepository: PostRepository) {
         Icon(
             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = "Like",
-            tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            tint = if (isLiked) MaterialTheme.colorScheme.heart else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -178,7 +189,7 @@ fun CommentSection(postId: String, comments: List<Comment>, commentRepository: C
                     Toast.makeText(context, "You don\'t have enough comment rewards. Try a pull!", Toast.LENGTH_SHORT).show()
                 }
             }) {
-                Text("Post")
+                Text("Post", fontSize = 18.sp)
             }
         }
     }

@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.auth)
+    implementation(libs.androidx.compose.material3)
 
 
     testImplementation(libs.junit)

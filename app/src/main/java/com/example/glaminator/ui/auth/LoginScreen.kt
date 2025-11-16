@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -28,6 +29,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.glaminator.ui.theme.OnSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +74,12 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("GLAMINATOR", style = MaterialTheme.typography.headlineLarge, color = Primary)
+                AsyncImage(
+                    model = "file:///android_asset/glaminatorLogo.png",
+                    contentDescription = "App Logo",
+                    modifier = Modifier.size(250.dp)
+                )
+                Text("GLAMINATOR", style = MaterialTheme.typography.headlineLarge, color = Primary, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(32.dp))
                 OutlinedTextField(
                     value = emailOrUsername,
@@ -83,7 +93,8 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
                     onValueChange = { password = it },
                     label = { Text("Password") },
                     visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -94,10 +105,13 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
                 ) {
                     Checkbox(
                         checked = rememberMe,
-                        onCheckedChange = { rememberMe = it }
+                        onCheckedChange = { rememberMe = it },
+                        colors = CheckboxDefaults.colors(
+                            uncheckedColor = Color.Black,
+                        )
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Remember me")
+                    Text("Remember me", color = OnSecondary)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
@@ -113,16 +127,17 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Login")
+                    Text("Login", fontSize = 18.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = onRegisterClick, modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                 ) {
-                    Text("Go to Register", color = Primary)
+                    Text("Go to Register", color = Primary, fontSize = 18.sp)
                 }
             }
+
         }
     }
 }
