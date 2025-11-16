@@ -11,11 +11,14 @@ import com.google.firebase.database.ValueEventListener
 class PostRepository {
 
     private val firebaseService = FirebaseService()
-    private val databaseReference: DatabaseReference = firebaseService.getDatabaseReference().child("posts")
+    private val databaseReference: DatabaseReference =
+        firebaseService.getDatabaseReference().child("posts")
 
     fun createPost(post: Post): Task<Void> {
         val newPostId = databaseReference.push().key
-        val newPost = post.copy(id = newPostId!!)
+            ?: throw IllegalStateException("Failed to generate post ID")
+
+        val newPost = post.copy(id = newPostId)
         return databaseReference.child(newPostId).setValue(newPost)
     }
 
@@ -24,15 +27,18 @@ class PostRepository {
     }
 
     fun getPosts(onPostsReceived: (List<Post>) -> Unit) {
-        databaseReference.orderByChild("timestamp").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val posts = snapshot.children.mapNotNull { it.getValue(Post::class.java) }
-                onPostsReceived(posts.reversed())
-            }
+        databaseReference
+            .orderByChild("timestamp")
+            .addValueEventListener(object : ValueEventListener {
 
-            override fun onCancelled(error: DatabaseError) {
-            }
-        })
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val posts = snapshot.children
+                        .mapNotNull { it.getValue(Post::class.java) }
+                    onPostsReceived(posts.reversed())
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 
     fun updatePost(id: String, post: Post): Task<Void> {
@@ -45,14 +51,14 @@ class PostRepository {
 
     fun addLikeToPost(postId: String, userId: String) {
         getPost(postId).addListenerForSingleValueEvent(object : ValueEventListener {
+
             override fun onDataChange(snapshot: DataSnapshot) {
-                val post = snapshot.getValue(Post::class.java)
-                if (post != null) {
-                    val newLikes = post.likes.toMutableList()
-                    if (!newLikes.contains(userId)) {
-                        newLikes.add(userId)
-                        updatePost(postId, post.copy(likes = newLikes))
-                    }
+                val post = snapshot.getValue(Post::class.java) ?: return
+                val newLikes = post.likes.toMutableList()
+
+                if (!newLikes.contains(userId)) {
+                    newLikes.add(userId)
+                    updatePost(postId, post.copy(likes = newLikes))
                 }
             }
 
@@ -62,14 +68,14 @@ class PostRepository {
 
     fun removeLikeFromPost(postId: String, userId: String) {
         getPost(postId).addListenerForSingleValueEvent(object : ValueEventListener {
+
             override fun onDataChange(snapshot: DataSnapshot) {
-                val post = snapshot.getValue(Post::class.java)
-                if (post != null) {
-                    val newLikes = post.likes.toMutableList()
-                    if (newLikes.contains(userId)) {
-                        newLikes.remove(userId)
-                        updatePost(postId, post.copy(likes = newLikes))
-                    }
+                val post = snapshot.getValue(Post::class.java) ?: return
+                val newLikes = post.likes.toMutableList()
+
+                if (newLikes.contains(userId)) {
+                    newLikes.remove(userId)
+                    updatePost(postId, post.copy(likes = newLikes))
                 }
             }
 
@@ -79,18 +85,44 @@ class PostRepository {
 
     fun markPostAsSeen(postId: String, userId: String) {
         getPost(postId).addListenerForSingleValueEvent(object : ValueEventListener {
+
             override fun onDataChange(snapshot: DataSnapshot) {
-                val post = snapshot.getValue(Post::class.java)
-                if (post != null) {
-                    if (!post.seenBy.contains(userId)) {
-                        val newSeenBy = post.seenBy.toMutableList()
-                        newSeenBy.add(userId)
-                        updatePost(postId, post.copy(seenBy = newSeenBy))
-                    }
+                val post = snapshot.getValue(Post::class.java) ?: return
+
+                if (!post.seenBy.contains(userId)) {
+                    val newSeen = post.seenBy.toMutableList()
+                    newSeen.add(userId)
+                    updatePost(postId, post.copy(seenBy = newSeen))
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {}
         })
+    }
+
+    fun searchPostsByTag(tag: String, onPostsReceived: (List<Post>) -> Unit) {
+        val query = tag.trim().lowercase()
+        if (query.isEmpty()) {
+            onPostsReceived(emptyList())
+            return
+        }
+
+        databaseReference
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val posts = snapshot.children
+                        .mapNotNull { it.getValue(Post::class.java) }
+                        .filter { post ->
+                            post.tags.any { t ->
+                                t.lowercase().contains(query)
+                            }
+                        }
+
+                    onPostsReceived(posts)
+                }
+
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 }
