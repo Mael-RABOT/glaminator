@@ -3,15 +3,7 @@ package com.example.glaminator.ui.home
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,27 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -64,41 +37,66 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
+
     val context = LocalContext.current
     var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
     var isRefreshing by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+    var query by remember { mutableStateOf("") }
 
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isRefreshing)
+    val searchResults by homeViewModel.searchResults.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
     fun refreshPosts() {
         coroutineScope.launch {
             isRefreshing = true
-            homeViewModel.getUnseenPosts { unseenPosts ->
-                posts = unseenPosts
+            homeViewModel.getUnseenPosts { unseen ->
+                posts = unseen
                 isRefreshing = false
             }
         }
     }
 
-    LaunchedEffect(Unit) {
-        refreshPosts()
-    }
+    LaunchedEffect(Unit) { refreshPosts() }
 
     GlaminatorTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(text = CurrentUser.user?.username ?: "Glaminator", color = Primary) },
+                    title = {
+                        Text(
+                            text = CurrentUser.user?.username ?: "Glaminator",
+                            color = Primary
+                        )
+                    },
                     navigationIcon = {
-                        IconButton(onClick = { context.startActivity(Intent(context, UserManagementActivity::class.java)) }) {
-                            Icon(Icons.Filled.AccountCircle, contentDescription = "Account", tint = Primary)
+                        IconButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(context, UserManagementActivity::class.java)
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.AccountCircle,
+                                contentDescription = "Account",
+                                tint = Primary
+                            )
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* TODO: Implement */ }) {
-                            Icon(Icons.Filled.Search, contentDescription = "Search", tint = Primary)
-                        }
+                        TextField(
+                            value = query,
+                            onValueChange = {
+                                query = it
+                                homeViewModel.searchByTag(it)
+                            },
+                            placeholder = { Text("Search tags", color = Primary) },
+                            singleLine = true,
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                                .fillMaxWidth(0.6f)
+                        )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Background
@@ -112,7 +110,11 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     },
                     containerColor = Primary
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Make a Post", tint = Color.Black)
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = "Make a Post",
+                        tint = Color.Black
+                    )
                 }
             }
         ) { innerPadding ->
@@ -121,25 +123,32 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                 onRefresh = ::refreshPosts,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                if (posts.isEmpty() && !isRefreshing) {
+                val displayList =
+                    if (query.isNotBlank()) searchResults else posts
+
+                if (displayList.isEmpty() && !isRefreshing) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "No unseen posts.", color = MaterialTheme.colorScheme.onBackground)
+                        Text(
+                            text = if (query.isNotBlank()) "No posts found." else "No unseen posts.",
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
                     }
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        itemsIndexed(posts) { idx, post ->
+                        itemsIndexed(displayList) { idx, post ->
                             PostItem(post = post) {
-                                val intent = Intent(context, PostDetailActivity::class.java).apply {
-                                    putExtra("POST_ID", post.id)
-                                }
+                                val intent =
+                                    Intent(context, PostDetailActivity::class.java).apply {
+                                        putExtra("POST_ID", post.id)
+                                    }
                                 context.startActivity(intent)
                             }
-                            if (idx < posts.count() -1) {
+                            if (idx < displayList.lastIndex) {
                                 Divider()
                             }
                         }
@@ -168,6 +177,7 @@ fun PostItem(post: Post, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -182,15 +192,35 @@ fun PostItem(post: Post, onClick: () -> Unit) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.Bottom
             ) {
-                Text(text = post.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = post.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (post.tags.isNotEmpty()) {
+                    Text(
+                        text = post.tags.joinToString(" · ") { "#$it" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.LightGray
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Favorite,
+                        imageVector = Icons.Filled.Favorite,
                         contentDescription = "Likes",
                         tint = Color.Red
                     )
-                    Text(text = " ${post.likes.size}", style = MaterialTheme.typography.bodyMedium, color = Color.White)
+                    Text(
+                        text = " ${post.likes.size}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
                 }
             }
         }
