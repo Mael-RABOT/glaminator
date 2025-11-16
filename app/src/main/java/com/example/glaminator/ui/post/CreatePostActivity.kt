@@ -56,6 +56,15 @@ class CreatePostActivity : ComponentActivity() {
 fun CreatePostScreen(onPostCreated: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    var tags by remember { mutableStateOf("") }
+
+    OutlinedTextField(
+        value = tags,
+        onValueChange = { tags = it },
+        label = { Text("Tags (comma separated)") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
     val context = LocalContext.current
     val postRepository = PostRepository()
 
@@ -77,6 +86,7 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
         Column(
             modifier = Modifier.padding(paddingValues).padding(16.dp)
         ) {
+
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -85,36 +95,63 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
                 isError = !ValidationUtils.isValidPostTitle(title),
                 colors = OutlinedTextFieldDefaults.colors()
             )
+
             Spacer(modifier = Modifier.height(8.dp))
+
             TextField(
                 value = content,
                 onValueChange = { content = it },
                 label = { Text("What's on your mind?") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
+                modifier = Modifier.fillMaxWidth().height(150.dp),
                 isError = !ValidationUtils.isValidPostContent(content),
                 colors = OutlinedTextFieldDefaults.colors(),
                 singleLine = false,
                 maxLines = Int.MAX_VALUE
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = tags,
+                onValueChange = { tags = it },
+                label = { Text("Tags (comma separated)") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors()
+            )
+
             Button(
                 onClick = {
                     val userId = CurrentUser.user?.id
-                    if (userId != null && ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content)) {
-                        val post = Post(userId = userId, title = title, content = content)
-                        postRepository.createPost(post).addOnSuccessListener {
-                            Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
-                            onPostCreated()
-                        }.addOnFailureListener {
-                            Toast.makeText(context, "Failed to create post.", Toast.LENGTH_SHORT).show()
-                        }
+                    if (userId != null &&
+                        ValidationUtils.isValidPostTitle(title) &&
+                        ValidationUtils.isValidPostContent(content)
+                    ) {
+
+                        val parsedTags = tags.split(",")
+                            .map { it.trim().lowercase() }
+                            .filter { it.isNotEmpty() }
+
+                        val post = Post(
+                            userId = userId,
+                            title = title,
+                            content = content,
+                            tags = parsedTags
+                        )
+
+
+                        postRepository.createPost(post)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
+                                onPostCreated()
+                            }.addOnFailureListener {
+                                Toast.makeText(context, "Failed to create post.", Toast.LENGTH_SHORT).show()
+                            }
                     } else {
-                        Toast.makeText(context, "Post title or content is empty or too long, or user is not logged in.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Invalid post.", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                enabled = ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content),
+                enabled = ValidationUtils.isValidPostTitle(title) &&
+                        ValidationUtils.isValidPostContent(content),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
                 Text("Post", color = Color.Black)
