@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +55,8 @@ import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.common.PostStats
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.titles
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -90,12 +93,15 @@ class PostDetailActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text(post?.title ?: "Post Details") },
+                            title = { Text(post?.title ?: "Post Details", color = titles)},
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
-                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = titles)
                                 }
-                            }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = ScaffoldBackground
+                            )
                         )
                     }
                 ) { padding ->
@@ -235,7 +241,7 @@ fun CommentItem(comment: Comment) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onSecondary) // update color
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.onPrimary)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
