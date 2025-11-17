@@ -1,8 +1,6 @@
 package com.example.glaminator.ui.post
 
-import android.content.Context
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -19,7 +17,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,7 +25,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,29 +32,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
-import com.example.glaminator.model.RewardType
 import com.example.glaminator.model.User
-import com.example.glaminator.model.UserReward
 import com.example.glaminator.repository.CommentRepository
 import com.example.glaminator.repository.PostRepository
-import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
-import com.example.glaminator.ui.theme.ScaffoldBackground
-import com.example.glaminator.ui.theme.titles
-import com.example.glaminator.ui.theme.heart
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
-
 
 class PostDetailActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -92,15 +78,12 @@ class PostDetailActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text(post?.title ?: "Post Details", color = titles) },
+                            title = { Text(post?.title ?: "Post Details") },
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
-                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = titles)
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                                 }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = ScaffoldBackground
-                            )
+                            }
                         )
                     }
                 ) {
@@ -129,25 +112,18 @@ class PostDetailActivity : ComponentActivity() {
 @Composable
 fun LikeButton(post: Post, postRepository: PostRepository) {
     val isLiked = CurrentUser.user?.id in post.likes
-    val context = LocalContext.current
-    val rewardRepository = remember { RewardRepository() }
-
     IconButton(onClick = {
         val userId = CurrentUser.user?.id ?: ""
         if (isLiked) {
             postRepository.removeLikeFromPost(post.id, userId)
         } else {
-            if (rewardRepository.consumeReward(context, RewardType.LIKE, 1)) {
-                postRepository.addLikeToPost(post.id, userId)
-            } else {
-                Toast.makeText(context, "You don\'t have enough likes. Try a pull!", Toast.LENGTH_SHORT).show()
-            }
+            postRepository.addLikeToPost(post.id, userId)
         }
     }) {
         Icon(
             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = "Like",
-            tint = if (isLiked) MaterialTheme.colorScheme.heart else MaterialTheme.colorScheme.onSurface
+            tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -155,8 +131,6 @@ fun LikeButton(post: Post, postRepository: PostRepository) {
 @Composable
 fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository) {
     var newComment by remember { mutableStateOf("") }
-    val context = LocalContext.current
-    val rewardRepository = remember { RewardRepository() }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Comments", style = MaterialTheme.typography.headlineSmall)
@@ -175,21 +149,15 @@ fun CommentSection(postId: String, comments: List<Comment>, commentRepository: C
                 modifier = Modifier.weight(1f)
             )
             Button(onClick = {
-                val userId = CurrentUser.user?.id ?: "Anonymous"
-
-                if (rewardRepository.consumeReward(context, RewardType.COMMENT, 1)) {
-                    val comment = Comment(
-                        postId = postId,
-                        userId = userId,
-                        content = newComment
-                    )
-                    commentRepository.createComment(comment)
-                    newComment = ""
-                } else {
-                    Toast.makeText(context, "You don\'t have enough comment rewards. Try a pull!", Toast.LENGTH_SHORT).show()
-                }
+                val comment = Comment(
+                    postId = postId,
+                    userId = CurrentUser.user?.id ?: "Anonymous",
+                    content = newComment
+                )
+                commentRepository.createComment(comment)
+                newComment = ""
             }) {
-                Text("Post", fontSize = 18.sp)
+                Text("Post")
             }
         }
     }
