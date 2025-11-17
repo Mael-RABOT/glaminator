@@ -1,29 +1,15 @@
 package com.example.glaminator.ui.home
 
 import android.content.Intent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -60,6 +46,8 @@ import com.example.glaminator.ui.user.UserManagementActivity
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
+import com.example.glaminator.ui.post.PostItem
+import com.example.glaminator.repository.PostRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +56,8 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
     var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    val postRepository = remember { PostRepository() }
 
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isRefreshing)
 
@@ -112,14 +102,20 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     },
                     containerColor = Primary
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Make a Post", tint = Color.Black)
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Make a Post",
+                        tint = Color.Black
+                    )
                 }
             }
         ) { innerPadding ->
             SwipeRefresh(
                 state = swipeRefreshState,
                 onRefresh = ::refreshPosts,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ) {
                 if (posts.isEmpty() && !isRefreshing) {
                     Box(
@@ -130,67 +126,30 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     ) {
                         itemsIndexed(posts) { idx, post ->
-                            PostItem(post = post) {
-                                val intent = Intent(context, PostDetailActivity::class.java).apply {
-                                    putExtra("POST_ID", post.id)
+                            val currentUserId = CurrentUser.user?.id
+                            PostItem(
+                                post = post,
+                                onPostClick = {
+                                    val intent = Intent(context, PostDetailActivity::class.java)
+                                    intent.putExtra("POST_ID", post.id)
+                                    context.startActivity(intent)
+                                },
+                                isLiked = CurrentUser.user?.id in post.likes,
+                                onLikeClicked = {
+                                    if (currentUserId != null) {
+                                        if (currentUserId in post.likes) {
+                                            postRepository.removeLikeFromPost(post.id, currentUserId)
+                                        } else {
+                                            postRepository.addLikeToPost(post.id, currentUserId)
+                                        }
+                                    }
                                 }
-                                context.startActivity(intent)
-                            }
-                            if (idx < posts.count() -1) {
-                                Divider()
-                            }
+                            )
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PostItem(post: Post, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .padding(8.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AsyncImage(
-                model = post.imageUrls.firstOrNull(),
-                contentDescription = "Post Image",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.7f)
-                            )
-                        )
-                    )
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                Text(text = post.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = "Likes",
-                        tint = Color.Red
-                    )
-                    Text(text = " ${post.likes.size}", style = MaterialTheme.typography.bodyMedium, color = Color.White)
                 }
             }
         }

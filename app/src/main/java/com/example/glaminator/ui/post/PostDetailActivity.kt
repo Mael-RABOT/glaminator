@@ -1,11 +1,8 @@
 package com.example.glaminator.ui.post
 
-import android.R.attr.onClick
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,15 +18,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,8 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
@@ -58,10 +50,10 @@ import com.example.glaminator.model.User
 import com.example.glaminator.repository.CommentRepository
 import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.repository.UserRepository
+import com.example.glaminator.ui.common.PostStats
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 
 class PostDetailActivity : ComponentActivity() {
@@ -189,41 +181,6 @@ fun LikeButton(isLiked: Boolean, onClick: () -> Unit) {
             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = "Like",
             tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-fun PostStats(like: Int, comments: Int, isLiked: Boolean = false, onLikeClicked: () -> Unit = {}) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Like button and count
-        LikeButton(
-            isLiked = isLiked,
-            onClick = onLikeClicked
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = like.toString(),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Comment icon and count
-        Icon(
-            imageVector = Icons.Filled.Comment,
-            contentDescription = "Comments",
-            modifier = Modifier.padding(8.dp)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = comments.toString(),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
         )
     }
 }
