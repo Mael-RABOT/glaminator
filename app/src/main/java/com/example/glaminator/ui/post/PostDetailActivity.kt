@@ -1,35 +1,22 @@
 package com.example.glaminator.ui.post
 
-import android.R.attr.onClick
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,18 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
@@ -65,126 +47,79 @@ import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 
 class PostDetailActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val postId = intent.getStringExtra("POST_ID") ?: return
 
         setContent {
             GlaminatorTheme {
-                PostDetailScreen(
-                    postId,
-                    onNavigateBack = { finish() }
-                )
-            }
-        }
-    }
-}
+                var post by remember { mutableStateOf<Post?>(null) }
+                var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
+                val postRepository = PostRepository()
+                val commentRepository = CommentRepository()
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PostDetailScreen(
-    postId: String,
-    onNavigateBack: () -> Unit
-) {
-    var post by remember { mutableStateOf<Post?>(null) }
-    var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
-    val postRepository = PostRepository()
-    val commentRepository = CommentRepository()
+                postRepository.getPost(postId).addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        post = snapshot.getValue(Post::class.java)
+                    }
 
-    DisposableEffect(postId) {
-        val postRef = postRepository.getPost(postId)
-        val postListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                post = snapshot.getValue(Post::class.java)
-            }
+                    override fun onCancelled(error: DatabaseError) { /* Handle error */ }
+                })
 
-            override fun onCancelled(error: DatabaseError) { /* Handle error */ }
-        }
-        postRef.addValueEventListener(postListener)
+                commentRepository.getCommentsForPost(postId).addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        comments = snapshot.children.mapNotNull { it.getValue(Comment::class.java) }
+                    }
 
-        onDispose {
-            postRef.removeEventListener(postListener)
-        }
-    }
+                    override fun onCancelled(error: DatabaseError) { /* Handle error */ }
+                })
 
-    DisposableEffect(postId) {
-        val commentsQuery = commentRepository.getCommentsForPost(postId)
-        val commentsListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                comments = snapshot.children.mapNotNull { it.getValue(Comment::class.java) }
-            }
-
-            override fun onCancelled(error: DatabaseError) { /* Handle error */ }
-        }
-        commentsQuery.addValueEventListener(commentsListener)
-
-        onDispose {
-            commentsQuery.removeEventListener(commentsListener)
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(post?.title ?: "Post Details") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text(post?.title ?: "Post Details") },
+                            navigationIcon = {
+                                IconButton(onClick = { finish() }) {
+                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                                }
+                            }
+                        )
+                    }
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it)
+                            .padding(16.dp)
+                    ) {
+                        post?.let {
+                            Text(text = it.title, style = MaterialTheme.typography.headlineMedium)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(text = it.content, style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LikeButton(post = it, postRepository = postRepository)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            CommentSection(postId = postId, comments = comments, commentRepository = commentRepository)
+                        }
                     }
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            post?.let { p ->
-                Column (
-                    modifier = Modifier.wrapContentHeight()
-                ) {
-                    Text(text = p.title, style = MaterialTheme.typography.headlineMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(text = p.content, style = MaterialTheme.typography.bodyLarge)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    PostStats(
-                        like = p.likes.size,
-                        comments = comments.size,
-                        isLiked = CurrentUser.user?.id in p.likes,
-                        onLikeClicked = {
-                            val userId = CurrentUser.user?.id ?: return@PostStats
-                            if (userId in post!!.likes) {
-                                postRepository.removeLikeFromPost(post!!.id, userId)
-                            } else {
-                                postRepository.addLikeToPost(post!!.id, userId)
-                            }
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                CommentSection(
-                    comments = comments,
-                    onPostComment = { commentText ->
-                        val userId = CurrentUser.user?.id ?: "Anonymous"
-                        val newComment = Comment(postId = post!!.id, userId = userId, content = commentText)
-                        commentRepository.createComment(newComment)
-                    },
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
     }
 }
 
 @Composable
-fun LikeButton(isLiked: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
+fun LikeButton(post: Post, postRepository: PostRepository) {
+    val isLiked = CurrentUser.user?.id in post.likes
+    IconButton(onClick = {
+        val userId = CurrentUser.user?.id ?: ""
+        if (isLiked) {
+            postRepository.removeLikeFromPost(post.id, userId)
+        } else {
+            postRepository.addLikeToPost(post.id, userId)
+        }
+    }) {
         Icon(
             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = "Like",
@@ -194,78 +129,34 @@ fun LikeButton(isLiked: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun PostStats(like: Int, comments: Int, isLiked: Boolean = false, onLikeClicked: () -> Unit = {}) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Like button and count
-        LikeButton(
-            isLiked = isLiked,
-            onClick = onLikeClicked
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = like.toString(),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Comment icon and count
-        Icon(
-            imageVector = Icons.Filled.Comment,
-            contentDescription = "Comments",
-            modifier = Modifier.padding(8.dp)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = comments.toString(),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-fun CommentSection(
-    comments: List<Comment>,
-    onPostComment: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository) {
     var newComment by remember { mutableStateOf("") }
 
-    Column(modifier = modifier.fillMaxWidth().fillMaxHeight()) {
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("Comments", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyColumn(modifier = Modifier.weight(1f)) {
             items(comments) { comment ->
                 CommentItem(comment = comment)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             TextField(
                 value = newComment,
                 onValueChange = { newComment = it },
-                shape = RoundedCornerShape(12.dp),
                 label = { Text("Add a comment") },
                 modifier = Modifier.weight(1f)
             )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = {
-                    onPostComment(newComment)
-                    newComment = ""
-                },
-                enabled = newComment.isNotBlank()
-            ) {
+            Button(onClick = {
+                val comment = Comment(
+                    postId = postId,
+                    userId = CurrentUser.user?.id ?: "Anonymous",
+                    content = newComment
+                )
+                commentRepository.createComment(comment)
+                newComment = ""
+            }) {
                 Text("Post")
             }
         }
@@ -274,45 +165,27 @@ fun CommentSection(
 
 @Composable
 fun CommentItem(comment: Comment) {
-    var user by remember(comment.userId) { mutableStateOf<User?>(null) }
-    val userRepository = remember { UserRepository() }
+    val userRepository = UserRepository()
+    var user by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(comment.userId) {
-        val userRef = userRepository.getUser(comment.userId)
-        val userListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                user = snapshot.getValue(User::class.java)
-            }
-
-            override fun onCancelled(error: DatabaseError) { /* Handle error */ }
+    userRepository.getUser(comment.userId).addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            user = snapshot.getValue(User::class.java)
         }
-        userRef.addListenerForSingleValueEvent(userListener)
-    }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = user?.username ?: "...",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-            Divider(
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = comment.content,
-                style = MaterialTheme.typography.bodyMedium
-            )
+        override fun onCancelled(error: DatabaseError) {
+            // Handle error
         }
+    })
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(
+            text = user?.username ?: "Loading...",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = comment.content,
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
