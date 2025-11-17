@@ -2,9 +2,10 @@ package com.example.glaminator.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
+private val LightColorScheme = lightColorScheme(
     primary = Primary,
     secondary = Secondary,
     background = Background,
@@ -15,13 +16,15 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = OnSurface,
     error = Error,
     surfaceVariant = SurfaceVariant,
-    onSurfaceVariant = OnSurfaceVariant
+    onSurfaceVariant = OnSurfaceVariant,
+
+
 )
 
 @Composable
 fun GlaminatorTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
         shapes = Shapes,
         content = content

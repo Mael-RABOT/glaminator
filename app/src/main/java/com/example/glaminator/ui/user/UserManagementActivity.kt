@@ -39,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,9 @@ import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.RewardType
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.heart
+import com.example.glaminator.ui.theme.titles
 import kotlinx.coroutines.launch
 
 class UserManagementActivity : ComponentActivity() {
@@ -100,12 +104,15 @@ fun UserManagementScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Account Management") },
+                title = { Text("Account Management", color = titles) },
                 navigationIcon = {
                     IconButton(onClick = { activity?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = titles)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ScaffoldBackground
+                )
             )
         }
     ) { paddingValues ->
@@ -118,7 +125,7 @@ fun UserManagementScreen() {
         ) {
             item {
                 Text(
-                    text = "Welcome, $currentUsername",
+                    text = "Welcome $currentUsername",
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -270,20 +277,20 @@ fun UserManagementScreen() {
                             Icon(
                                 Icons.Filled.Warning,
                                 contentDescription = "Warning",
-                                tint = MaterialTheme.colorScheme.onError
+                                tint = MaterialTheme.colorScheme.heart
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Delete Account",
                                 style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onError
+
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "This action is irreversible and will delete all your data. Please type your username to confirm.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onError
+
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedTextField(

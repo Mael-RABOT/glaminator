@@ -22,6 +22,9 @@ import com.example.glaminator.utils.ValidationUtils
 import com.example.glaminator.viewmodel.UserViewModel
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +59,8 @@ fun RegisterScreen(userViewModel: UserViewModel = viewModel(), onRegisterSuccess
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("GLAMINATOR", style = MaterialTheme.typography.headlineLarge, color = Primary)
+
+                Text("GLAMINATOR", style = MaterialTheme.typography.headlineLarge, color = Primary, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(32.dp))
                 OutlinedTextField(
                     value = username,
@@ -101,14 +105,14 @@ fun RegisterScreen(userViewModel: UserViewModel = viewModel(), onRegisterSuccess
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Primary)
                 ) {
-                    Text("Register")
+                    Text("Register", fontSize = 18.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = onLoginClick, modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                 ) {
-                    Text("Go to Login", color = Primary)
+                    Text("Go to Login", color = Primary, fontSize = 18.sp)
                 }
             }
         }

@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,12 +42,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.glaminator.model.Reward
 import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.Surface
+import com.example.glaminator.ui.theme.titles
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -118,12 +124,15 @@ fun PullScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gacha Pull") },
+                title = { Text("Gacha Pull", color = titles,  fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { activity?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = titles)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ScaffoldBackground
+                )
             )
         }
     ) { paddingValues ->
@@ -159,7 +168,7 @@ fun PullScreen() {
                         isOpened = false
                         tapsRemaining = 10
                     }) {
-                        Text("Awesome!")
+                        Text("Awesome!", fontSize = 18.sp)
                     }
                 }
             } else {
