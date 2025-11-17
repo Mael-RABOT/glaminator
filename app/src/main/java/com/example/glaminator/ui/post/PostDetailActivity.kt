@@ -1,6 +1,8 @@
 package com.example.glaminator.ui.post
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -32,13 +34,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.RewardType
 import com.example.glaminator.model.User
+import com.example.glaminator.model.UserReward
 import com.example.glaminator.repository.CommentRepository
 import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.google.firebase.database.DataSnapshot
@@ -112,12 +118,19 @@ class PostDetailActivity : ComponentActivity() {
 @Composable
 fun LikeButton(post: Post, postRepository: PostRepository) {
     val isLiked = CurrentUser.user?.id in post.likes
+    val context = LocalContext.current
+    val rewardRepository = remember { RewardRepository() }
+
     IconButton(onClick = {
         val userId = CurrentUser.user?.id ?: ""
         if (isLiked) {
             postRepository.removeLikeFromPost(post.id, userId)
         } else {
-            postRepository.addLikeToPost(post.id, userId)
+            if (rewardRepository.consumeReward(context, RewardType.LIKE, 1)) {
+                postRepository.addLikeToPost(post.id, userId)
+            } else {
+                Toast.makeText(context, "You don\'t have enough likes. Try a pull!", Toast.LENGTH_SHORT).show()
+            }
         }
     }) {
         Icon(
@@ -131,6 +144,8 @@ fun LikeButton(post: Post, postRepository: PostRepository) {
 @Composable
 fun CommentSection(postId: String, comments: List<Comment>, commentRepository: CommentRepository) {
     var newComment by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val rewardRepository = remember { RewardRepository() }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Comments", style = MaterialTheme.typography.headlineSmall)
@@ -149,13 +164,19 @@ fun CommentSection(postId: String, comments: List<Comment>, commentRepository: C
                 modifier = Modifier.weight(1f)
             )
             Button(onClick = {
-                val comment = Comment(
-                    postId = postId,
-                    userId = CurrentUser.user?.id ?: "Anonymous",
-                    content = newComment
-                )
-                commentRepository.createComment(comment)
-                newComment = ""
+                val userId = CurrentUser.user?.id ?: "Anonymous"
+
+                if (rewardRepository.consumeReward(context, RewardType.COMMENT, 1)) {
+                    val comment = Comment(
+                        postId = postId,
+                        userId = userId,
+                        content = newComment
+                    )
+                    commentRepository.createComment(comment)
+                    newComment = ""
+                } else {
+                    Toast.makeText(context, "You don\'t have enough comment rewards. Try a pull!", Toast.LENGTH_SHORT).show()
+                }
             }) {
                 Text("Post")
             }

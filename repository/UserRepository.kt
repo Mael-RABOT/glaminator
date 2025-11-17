@@ -73,12 +73,12 @@ class UserRepository {
                                 deleteCommentTasks.add(comment.ref.removeValue())
                             }
 
-                            Tasks.whenAll(deleteCommentTasks).addOnCompleteListener { 
+                            Tasks.whenAll(deleteCommentTasks).addOnCompleteListener {
                                 deleteUser(id).addOnCompleteListener { userDeleteTask ->
                                     if (userDeleteTask.isSuccessful) {
                                         taskCompletionSource.setResult(null)
                                     } else {
-                                        taskCompletionSource.setException(userDeleteTask.exception!!)
+                                        taskCompletion-source.setException(userDeleteTask.exception!!)
                                     }
                                 }
                             }
@@ -99,8 +99,8 @@ class UserRepository {
         return taskCompletionSource.task
     }
 
-    fun updateUserRewards(userId: String, rewards: List<UserReward>): Task<Void> {
+    fun updateUserRewards(userId: String, reward: UserReward): Task<Void> {
         val userRef = databaseReference.child(userId)
-        return userRef.child("rewards").setValue(rewards)
+        return userRef.child("rewards").child(reward.type.name).setValue(reward)
     }
 }

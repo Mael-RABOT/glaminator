@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -53,6 +54,7 @@ import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
 import com.example.glaminator.ui.post.CreatePostActivity
 import com.example.glaminator.ui.post.PostDetailActivity
+import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
@@ -96,6 +98,9 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                         }
                     },
                     actions = {
+                        IconButton(onClick = { context.startActivity(Intent(context, PullActivity::class.java)) }) {
+                            Icon(Icons.Filled.CardGiftcard, contentDescription = "Pull", tint = Primary)
+                        }
                         IconButton(onClick = { /* TODO: Implement */ }) {
                             Icon(Icons.Filled.Search, contentDescription = "Search", tint = Primary)
                         }
@@ -186,7 +191,7 @@ fun PostItem(post: Post, onClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Favorite,
+                        imageVector = Icons.Filled.Favorite,
                         contentDescription = "Likes",
                         tint = Color.Red
                     )

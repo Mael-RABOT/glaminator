@@ -1,6 +1,7 @@
 package com.example.glaminator.ui.user
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
@@ -34,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -51,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.glaminator.MainActivity
 import com.example.glaminator.data.CurrentUser
+import com.example.glaminator.model.RewardType
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import kotlinx.coroutines.launch
@@ -78,10 +82,20 @@ fun UserManagementScreen() {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val userRepository = remember { UserRepository() }
+    val userPrefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    val glaminatorPrefs = context.getSharedPreferences("glaminator_prefs", Context.MODE_PRIVATE)
 
     var currentUsername by remember { mutableStateOf(CurrentUser.user?.username ?: "") }
     var newUsername by remember { mutableStateOf("") }
     var confirmationUsername by remember { mutableStateOf("") }
+    var isGachaDisabled by remember {
+        mutableStateOf(glaminatorPrefs.getBoolean("gacha_disabled", false))
+    }
+
+    val user = CurrentUser.user
+    val postCount = user?.rewards?.find { it.type == RewardType.POST }?.quantity ?: 0
+    val likeCount = user?.rewards?.find { it.type == RewardType.LIKE }?.quantity ?: 0
+    val commentCount = user?.rewards?.find { it.type == RewardType.COMMENT }?.quantity ?: 0
 
     Scaffold(
         topBar = {
@@ -155,6 +169,80 @@ fun UserManagementScreen() {
                 }
             }
 
+            // Gacha Toggle Section
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Disable Gacha", style = MaterialTheme.typography.titleLarge)
+                            Switch(
+                                checked = isGachaDisabled,
+                                onCheckedChange = {
+                                    isGachaDisabled = it
+                                    with(glaminatorPrefs.edit()) {
+                                        putBoolean("gacha_disabled", it)
+                                        apply()
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+
+            // Logout Section
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Logout",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Logout",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                CurrentUser.user = null
+                                with(userPrefs.edit()) {
+                                    remove("user_id")
+                                    apply()
+                                }
+                                with(glaminatorPrefs.edit()) {
+                                    putBoolean("remember_me", false)
+                                    apply()
+                                }
+                                val intent = Intent(context, MainActivity::class.java).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                }
+                                context.startActivity(intent)
+                                activity?.finish()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Logout")
+                        }
+                    }
+                }
+            }
+
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -163,9 +251,9 @@ fun UserManagementScreen() {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = "Your Statistics", style = MaterialTheme.typography.titleLarge)
                         Spacer(modifier = Modifier.height(16.dp))
-                        StatisticItem(icon = Icons.Filled.Description, label = "Posts", value = "0")
-                        StatisticItem(icon = Icons.Filled.Favorite, label = "Likes", value = "0")
-                        StatisticItem(icon = Icons.Filled.Comment, label = "Comments", value = "0")
+                        StatisticItem(icon = Icons.Filled.Description, label = "Posts", value = postCount)
+                        StatisticItem(icon = Icons.Filled.Favorite, label = "Likes", value = likeCount)
+                        StatisticItem(icon = Icons.Filled.Comment, label = "Comments", value = commentCount)
                     }
                 }
             }
@@ -214,6 +302,14 @@ fun UserManagementScreen() {
                                                 .addOnSuccessListener {
                                                     Toast.makeText(context, "Account deleted successfully", Toast.LENGTH_SHORT).show()
                                                     CurrentUser.user = null
+                                                    with(userPrefs.edit()) {
+                                                        remove("user_id")
+                                                        apply()
+                                                    }
+                                                    with(glaminatorPrefs.edit()) {
+                                                        putBoolean("remember_me", false)
+                                                        apply()
+                                                    }
                                                     val intent = Intent(context, MainActivity::class.java).apply {
                                                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                                     }
@@ -247,7 +343,7 @@ fun UserManagementScreen() {
 }
 
 @Composable
-fun StatisticItem(icon: ImageVector, label: String, value: String) {
+fun StatisticItem(icon: ImageVector, label: String, value: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -258,7 +354,7 @@ fun StatisticItem(icon: ImageVector, label: String, value: String) {
         Spacer(modifier = Modifier.width(16.dp))
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.weight(1f))
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(text = value.toString(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
 
