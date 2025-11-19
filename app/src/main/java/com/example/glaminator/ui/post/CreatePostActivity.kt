@@ -4,41 +4,19 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.PostTags
 import com.example.glaminator.repository.PostRepository
-import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
-import com.example.glaminator.utils.ValidationUtils
+import androidx.compose.foundation.layout.FlowRow
 
 class CreatePostActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,14 +34,7 @@ class CreatePostActivity : ComponentActivity() {
 fun CreatePostScreen(onPostCreated: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-    var tags by remember { mutableStateOf("") }
-
-    OutlinedTextField(
-        value = tags,
-        onValueChange = { tags = it },
-        label = { Text("Tags (comma separated)") },
-        modifier = Modifier.fillMaxWidth()
-    )
+    var selectedTags by remember { mutableStateOf<List<PostTags>>(emptyList()) }
 
     val context = LocalContext.current
     val postRepository = PostRepository()
@@ -71,90 +42,77 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Post", color = Primary) },
-                navigationIcon = {
-                    IconButton(onClick = onPostCreated) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Primary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Background
-                )
+                title = { Text("Create Post", color = Primary) }
             )
         }
-    ) { paddingValues ->
+    ) { padding ->
+
         Column(
-            modifier = Modifier.padding(paddingValues).padding(16.dp)
+            modifier = Modifier.padding(padding).padding(16.dp)
         ) {
 
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth(),
-                isError = !ValidationUtils.isValidPostTitle(title),
-                colors = OutlinedTextFieldDefaults.colors()
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             TextField(
                 value = content,
                 onValueChange = { content = it },
                 label = { Text("What's on your mind?") },
-                modifier = Modifier.fillMaxWidth().height(150.dp),
-                isError = !ValidationUtils.isValidPostContent(content),
-                colors = OutlinedTextFieldDefaults.colors(),
-                singleLine = false,
-                maxLines = Int.MAX_VALUE
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = tags,
-                onValueChange = { tags = it },
-                label = { Text("Tags (comma separated)") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors()
-            )
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text("Select tags:", style = MaterialTheme.typography.titleMedium)
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            FlowRow {
+                PostTags.values().forEach { tag ->
+                    FilterChip(
+                        selected = selectedTags.contains(tag),
+                        onClick = {
+                            selectedTags = if (selectedTags.contains(tag))
+                                selectedTags - tag else selectedTags + tag
+                        },
+                        label = { Text(tag.name) },
+                        modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
                     val userId = CurrentUser.user?.id
-                    if (userId != null &&
-                        ValidationUtils.isValidPostTitle(title) &&
-                        ValidationUtils.isValidPostContent(content)
-                    ) {
-
-                        val parsedTags = tags.split(",")
-                            .map { it.trim().lowercase() }
-                            .filter { it.isNotEmpty() }
+                    if (userId != null) {
 
                         val post = Post(
                             userId = userId,
                             title = title,
                             content = content,
-                            tags = parsedTags
+                            tags = selectedTags
                         )
 
-
-                        postRepository.createPost(post)
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
-                                onPostCreated()
-                            }.addOnFailureListener {
-                                Toast.makeText(context, "Failed to create post.", Toast.LENGTH_SHORT).show()
-                            }
-                    } else {
-                        Toast.makeText(context, "Invalid post.", Toast.LENGTH_SHORT).show()
+                        postRepository.createPost(post).addOnSuccessListener {
+                            Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
+                            onPostCreated()
+                        }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                enabled = ValidationUtils.isValidPostTitle(title) &&
-                        ValidationUtils.isValidPostContent(content),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary)
+                modifier = Modifier.fillMaxWidth(),
+                enabled = title.isNotBlank() && content.isNotBlank()
             ) {
-                Text("Post", color = Color.Black)
+                Text("Post")
             }
         }
     }
