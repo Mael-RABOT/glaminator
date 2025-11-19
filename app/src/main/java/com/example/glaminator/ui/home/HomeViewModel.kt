@@ -2,6 +2,7 @@ package com.example.glaminator.ui.home
 
 import androidx.lifecycle.ViewModel
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.PostTags
 import com.example.glaminator.repository.PostRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,30 +17,26 @@ class HomeViewModel : ViewModel() {
     val searchResults: StateFlow<List<Post>> = _searchResults
 
     fun getUnseenPosts(onPostsReceived: (List<Post>) -> Unit) {
-        postRepository.getPosts { allPosts ->
-            val unseen = if (currentUserId != null) {
-                allPosts.filter { !it.seenBy.contains(currentUserId) }
-            } else {
-                allPosts
-            }
+        postRepository.getPosts { posts ->
+            val unseen = posts.filter { !it.seenBy.contains(currentUserId) }
             onPostsReceived(unseen)
         }
     }
 
     fun markPostAsSeen(post: Post) {
-        val uid = currentUserId ?: return
-        postRepository.markPostAsSeen(post.id, uid)
+        currentUserId?.let {
+            postRepository.markPostAsSeen(post.id, it)
+        }
     }
 
-    fun searchByTag(tag: String) {
-        val trimmed = tag.trim()
-        if (trimmed.isEmpty()) {
+    fun searchByTag(tag: PostTags?) {
+        if (tag == null) {
             _searchResults.value = emptyList()
             return
         }
 
-        postRepository.searchPostsByTag(trimmed) { posts ->
-            _searchResults.value = posts
+        postRepository.searchPostsByTag(tag) { results ->
+            _searchResults.value = results
         }
     }
 }
