@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -94,6 +95,17 @@ fun PostItem (
                 maxLines = 4,
                 overflow = TextOverflow.Ellipsis
             )
+            Spacer(Modifier.height(6.dp))
+
+            if (post.tags.isNotEmpty()) {
+                Text(
+                    text = post.tags.joinToString(" · ") { "#${it.name}" },
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(6.dp))
+            }
+
 
             Spacer(modifier = Modifier.height(12.dp))
             Divider(

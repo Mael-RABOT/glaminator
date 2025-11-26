@@ -52,6 +52,18 @@ import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.ScaffoldBackground
 import com.example.glaminator.ui.theme.titles
 import kotlinx.coroutines.launch
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.example.glaminator.model.PostTags
+import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.Primary
+import androidx.compose.foundation.layout.FlowRow
+
+
 
 class CreatePostActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,6 +92,8 @@ fun CreatePostScreen() {
     var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     val postRepository = remember { PostRepository() }
     val coroutineScope = rememberCoroutineScope()
+    var selectedTags by remember { mutableStateOf<List<PostTags>>(emptyList()) }
+
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents(),
@@ -134,7 +148,25 @@ fun CreatePostScreen() {
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(20.dp))
 
+            Text("Select tags:", style = MaterialTheme.typography.titleMedium)
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            FlowRow {
+                PostTags.values().forEach { tag ->
+                    FilterChip(
+                        selected = selectedTags.contains(tag),
+                        onClick = {
+                            selectedTags = if (selectedTags.contains(tag))
+                                selectedTags - tag else selectedTags + tag
+                        },
+                        label = { Text(tag.name) },
+                        modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
@@ -146,6 +178,7 @@ fun CreatePostScreen() {
                                     userId = user.id,
                                     title = title,
                                     content = content,
+                                    tags = selectedTags
                                 )
                                 postRepository.createPost(post)
                                 Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
