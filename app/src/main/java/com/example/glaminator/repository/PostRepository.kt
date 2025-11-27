@@ -131,7 +131,7 @@ class PostRepository {
 
     fun searchPostsByTag(tag: PostTags, onPostsReceived: (List<Post>) -> Unit) {
         databaseReference
-            .addListenerForSingleValueEvent(object : ValueEventListener {
+            .addValueEventListener(object : ValueEventListener {
 
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val results = snapshot.children.mapNotNull { snap ->

@@ -39,5 +39,6 @@ class HomeViewModel : ViewModel() {
             _searchResults.value = results
         }
     }
+
 }
 
