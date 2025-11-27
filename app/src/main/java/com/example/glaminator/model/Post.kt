@@ -1,5 +1,11 @@
 package com.example.glaminator.model
 
+enum class PostTags {
+    TIPS,
+    DISCUSSION,
+    FOOD,
+    PLACES
+}
 data class Post(
     val id: String = "",
     val userId: String = "",
@@ -7,6 +13,7 @@ data class Post(
     val content: String = "",
     val imageUrls: List<String> = emptyList(),
     val timestamp: Long = System.currentTimeMillis(),
-    val likes: List<String> = emptyList(), // List of user IDs
-    val seenBy: List<String> = emptyList() // List of user IDs
+    val likes: List<String> = emptyList(),
+    val seenBy: List<String> = emptyList(),
+    val tags: List<PostTags> = emptyList()
 )

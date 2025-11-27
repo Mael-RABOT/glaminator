@@ -10,7 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -18,10 +21,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.PostTags
 import com.example.glaminator.ui.post.CreatePostActivity
 import com.example.glaminator.ui.post.PostDetailActivity
 import com.example.glaminator.ui.theme.Background
@@ -53,7 +60,7 @@ import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.theme.ScaffoldBackground
 import com.example.glaminator.ui.theme.titles
-
+import com.example.glaminator.ui.home.HomeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
@@ -61,7 +68,10 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
     var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    var showSearchDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
+    val searchResults by homeViewModel.searchResults.collectAsState()
     val postRepository = remember { PostRepository() }
 
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isRefreshing)
@@ -94,8 +104,20 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                         IconButton(onClick = { context.startActivity(Intent(context, PullActivity::class.java)) }) {
                             Icon(Icons.Filled.CardGiftcard, contentDescription = "Pull", tint = titles)
                         }
-                        IconButton(onClick = { /* TODO: Implement */ }) {
-                            Icon(Icons.Filled.Search, contentDescription = "Search", tint = titles)
+                        IconButton(onClick = { showSearchDialog = true }) {
+                            Icon(Icons.Filled.Tag, contentDescription = "Search by Tag", tint = titles)
+                        }
+                        IconButton(
+                            onClick = {
+                                searchQuery = ""
+                                homeViewModel.searchByTag(null)
+                            }
+                        ) {
+                            Icon(
+                                Icons.Filled.Clear,
+                                contentDescription = "Clear Search",
+                                tint = titles
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -118,6 +140,35 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                 }
             }
         ) { innerPadding ->
+            if (showSearchDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSearchDialog = false },
+                    title = { Text("Search posts by tag") },
+                    text = {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { text ->
+                                searchQuery = text
+
+                                val tagEnum = try {
+                                    PostTags.valueOf(text.trim().uppercase())
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                                homeViewModel.searchByTag(tagEnum)
+                            },
+                            placeholder = { Text("Enter tag (e.g. FOOD)") },
+                            singleLine = true
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showSearchDialog = false }) {
+                            Text("Close")
+                        }
+                    }
+                )
+            }
             SwipeRefresh(
                 state = swipeRefreshState,
                 onRefresh = ::refreshPosts,
@@ -125,6 +176,9 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
+                val listToDisplay =
+                    if (searchQuery.isNotBlank()) searchResults else posts
+
                 if (posts.isEmpty() && !isRefreshing) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -136,7 +190,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        itemsIndexed(posts) { idx, post ->
+                        itemsIndexed(listToDisplay) { idx, post ->
                             val currentUserId = CurrentUser.user?.id
                             PostItem(
                                 post = post,
@@ -153,7 +207,9 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                                         } else {
                                             postRepository.addLikeToPost(post.id, currentUserId)
                                         }
+
                                     }
+
                                 }
                             )
                         }
