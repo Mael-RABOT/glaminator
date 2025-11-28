@@ -196,7 +196,7 @@ fun PullScreen() {
                                 isOpened = true
                                 val generatedReward = rewardRepository.generateReward()
                                 reward = generatedReward
-                                rewardRepository.claimReward(generatedReward)
+                                rewardRepository.claimReward(context, generatedReward)
                             }
                         },
                     contentAlignment = Alignment.Center

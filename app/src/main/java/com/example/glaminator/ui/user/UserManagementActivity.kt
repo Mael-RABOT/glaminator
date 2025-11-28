@@ -256,7 +256,7 @@ fun UserManagementScreen() {
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Your Statistics", style = MaterialTheme.typography.titleLarge)
+                        Text(text = "Your Rewards", style = MaterialTheme.typography.titleLarge)
                         Spacer(modifier = Modifier.height(16.dp))
                         StatisticItem(icon = Icons.Filled.Description, label = "Posts", value = postCount)
                         StatisticItem(icon = Icons.Filled.Favorite, label = "Likes", value = likeCount)

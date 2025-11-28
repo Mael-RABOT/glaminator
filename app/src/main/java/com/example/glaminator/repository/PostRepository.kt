@@ -129,7 +129,7 @@ class PostRepository {
             })
     }
 
-    fun searchPostsByTag(tag: PostTags, onPostsReceived: (List<Post>) -> Unit) {
+    fun searchPostsByTags(tags: List<PostTags>, onPostsReceived: (List<Post>) -> Unit) {
         databaseReference
             .addValueEventListener(object : ValueEventListener {
 
@@ -139,16 +139,20 @@ class PostRepository {
                         val tagStrings =
                             snap.child("tags").children.mapNotNull { it.getValue(String::class.java) }
 
-                        if (!tagStrings.any { it.equals(tag.name, ignoreCase = true) })
-                            return@mapNotNull null
-
-                        val basePost = snap.getValue(Post::class.java) ?: return@mapNotNull null
-
-                        val enumTags = tagStrings.mapNotNull {
-                            try { PostTags.valueOf(it.uppercase()) } catch (_: Exception) { null }
+                        val postTags = tagStrings.mapNotNull {
+                            try {
+                                PostTags.valueOf(it.uppercase())
+                            } catch (_: Exception) {
+                                null
+                            }
                         }
 
-                        basePost.copy(tags = enumTags)
+                        if (tags.isEmpty() || postTags.containsAll(tags)) {
+                            val basePost = snap.getValue(Post::class.java) ?: return@mapNotNull null
+                            basePost.copy(tags = postTags)
+                        } else {
+                            null
+                        }
                     }
 
                     onPostsReceived(results)
