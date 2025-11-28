@@ -6,4 +6,9 @@
 .kotlin
 *google-services.json
 app/google-services.json
+
 app/build
+local.properties
+
+*.jks
+app/release/
