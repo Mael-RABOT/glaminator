@@ -35,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
 import com.example.glaminator.model.PostTags
+import com.example.glaminator.model.RewardType
 import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.ui.components.TagSelectionDialog
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
@@ -62,6 +64,7 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
     var selectedTags by remember { mutableStateOf<Set<PostTags>>(emptySet()) }
     val context = LocalContext.current
     val postRepository = PostRepository()
+    val rewardRepository = RewardRepository()
 
     if (showTagDialog) {
         TagSelectionDialog(
@@ -124,12 +127,16 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
                 onClick = {
                     val userId = CurrentUser.user?.id
                     if (userId != null && ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content)) {
-                        val post = Post(userId = userId, title = title, content = content, tags = selectedTags.toList())
-                        postRepository.createPost(post).addOnSuccessListener {
-                            Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
-                            onPostCreated()
-                        }.addOnFailureListener {
-                            Toast.makeText(context, "Failed to create post.", Toast.LENGTH_SHORT).show()
+                        if (rewardRepository.consumeReward(context, RewardType.POST, 1)) {
+                            val post = Post(userId = userId, title = title, content = content, tags = selectedTags.toList())
+                            postRepository.createPost(post).addOnSuccessListener {
+                                Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
+                                onPostCreated()
+                            }.addOnFailureListener {
+                                Toast.makeText(context, "Failed to create post.", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "You don't have enough rewards to post.", Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         Toast.makeText(context, "Post title or content is empty or too long, or user is not logged in.", Toast.LENGTH_SHORT).show()

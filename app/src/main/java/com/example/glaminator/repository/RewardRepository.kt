@@ -31,7 +31,12 @@ class RewardRepository {
         return Reward(rewardType, quantity, rarity)
     }
 
-    fun claimReward(reward: Reward) {
+    fun claimReward(context: Context, reward: Reward) {
+        val glaminatorPrefs = context.getSharedPreferences("glaminator_prefs", Context.MODE_PRIVATE)
+        if (glaminatorPrefs.getBoolean("gacha_disabled", false)) {
+            return
+        }
+
         CurrentUser.user?.let { user ->
             val existingReward = user.rewards.find { it.type == reward.type }
             val updatedRewards = if (existingReward != null) {

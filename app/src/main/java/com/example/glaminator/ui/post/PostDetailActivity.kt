@@ -1,6 +1,7 @@
 package com.example.glaminator.ui.post
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
@@ -44,14 +45,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.RewardType
 import com.example.glaminator.model.User
 import com.example.glaminator.repository.CommentRepository
 import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.repository.UserRepository
 import com.example.glaminator.ui.common.PostStats
 import com.example.glaminator.ui.theme.GlaminatorTheme
@@ -73,6 +77,8 @@ class PostDetailActivity : ComponentActivity() {
                 var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
                 val postRepository = PostRepository()
                 val commentRepository = CommentRepository()
+                val rewardRepository = RewardRepository()
+                val context = LocalContext.current
 
                 postRepository.getPost(postId).addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
@@ -93,7 +99,7 @@ class PostDetailActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text(post?.title ?: "Post Details", color = titles)},
+                            title = { Text(post?.title ?: "Post Details", color = titles) },
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
                                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = titles)
@@ -112,7 +118,7 @@ class PostDetailActivity : ComponentActivity() {
                             .padding(16.dp)
                     ) {
                         post?.let { p ->
-                            Column (
+                            Column(
                                 modifier = Modifier.wrapContentHeight()
                             ) {
                                 Text(text = p.title, style = MaterialTheme.typography.headlineMedium)
@@ -129,8 +135,20 @@ class PostDetailActivity : ComponentActivity() {
                                         val userId = CurrentUser.user?.id ?: return@PostStats
                                         if (userId in post!!.likes) {
                                             postRepository.removeLikeFromPost(post!!.id, userId)
+                                            rewardRepository.claimReward(
+                                                context,
+                                                com.example.glaminator.model.Reward(
+                                                    type = RewardType.LIKE,
+                                                    quantity = 1,
+                                                    rarity = com.example.glaminator.model.Rarity.COMMON
+                                                )
+                                            )
                                         } else {
-                                            postRepository.addLikeToPost(post!!.id, userId)
+                                            if (rewardRepository.consumeReward(context, RewardType.LIKE, 1)) {
+                                                postRepository.addLikeToPost(post!!.id, userId)
+                                            } else {
+                                                Toast.makeText(context, "You don't have enough rewards to like.", Toast.LENGTH_SHORT).show()
+                                            }
                                         }
                                     }
                                 )
@@ -142,9 +160,13 @@ class PostDetailActivity : ComponentActivity() {
                         CommentSection(
                             comments = comments,
                             onPostComment = { commentText ->
-                                val userId = CurrentUser.user?.id ?: "Anonymous"
-                                val newComment = Comment(postId = postId, userId = userId, content = commentText)
-                                commentRepository.createComment(newComment)
+                                if (rewardRepository.consumeReward(context, RewardType.COMMENT, 1)) {
+                                    val userId = CurrentUser.user?.id ?: "Anonymous"
+                                    val newComment = Comment(postId = postId, userId = userId, content = commentText)
+                                    commentRepository.createComment(newComment)
+                                } else {
+                                    Toast.makeText(context, "You don't have enough rewards to comment.", Toast.LENGTH_SHORT).show()
+                                }
                             },
                             modifier = Modifier.weight(1f)
                         )

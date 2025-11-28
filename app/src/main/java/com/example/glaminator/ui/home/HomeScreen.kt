@@ -1,6 +1,7 @@
 package com.example.glaminator.ui.home
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -37,20 +38,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
 import com.example.glaminator.model.PostTags
+import com.example.glaminator.model.RewardType
+import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.repository.RewardRepository
+import com.example.glaminator.ui.components.TagSelectionDialog
 import com.example.glaminator.ui.post.CreatePostActivity
 import com.example.glaminator.ui.post.PostDetailActivity
+import com.example.glaminator.ui.post.PostItem
+import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.titles
 import com.example.glaminator.ui.user.UserManagementActivity
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
-import com.example.glaminator.ui.post.PostItem
-import com.example.glaminator.repository.PostRepository
-import com.example.glaminator.ui.components.TagSelectionDialog
-import com.example.glaminator.ui.pull.PullActivity
-import com.example.glaminator.ui.theme.ScaffoldBackground
-import com.example.glaminator.ui.theme.titles
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +67,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
 
     val searchResults by homeViewModel.searchResults.collectAsState()
     val postRepository = remember { PostRepository() }
+    val rewardRepository = remember { RewardRepository() }
 
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = isRefreshing)
 
@@ -177,8 +181,20 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                                     if (currentUserId != null) {
                                         if (currentUserId in post.likes) {
                                             postRepository.removeLikeFromPost(post.id, currentUserId)
+                                            rewardRepository.claimReward(
+                                                context,
+                                                com.example.glaminator.model.Reward(
+                                                    type = RewardType.LIKE,
+                                                    quantity = 1,
+                                                    rarity = com.example.glaminator.model.Rarity.COMMON
+                                                )
+                                            )
                                         } else {
-                                            postRepository.addLikeToPost(post.id, currentUserId)
+                                            if (rewardRepository.consumeReward(context, RewardType.LIKE, 1)) {
+                                                postRepository.addLikeToPost(post.id, currentUserId)
+                                            } else {
+                                                Toast.makeText(context, "You don't have enough rewards to like.", Toast.LENGTH_SHORT).show()
+                                            }
                                         }
                                     }
                                 }
