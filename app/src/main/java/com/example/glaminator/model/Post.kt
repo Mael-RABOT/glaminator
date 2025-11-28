@@ -4,7 +4,16 @@ enum class PostTags {
     TIPS,
     DISCUSSION,
     FOOD,
-    PLACES
+    PLACES,
+    EVENTS,
+    OFFERS,
+    GENERAL,
+    FASHION,
+    TECHNOLOGY,
+    COURSE,
+    HEALTH,
+    TRAVEL,
+    ENTERTAINMENT
 }
 
 data class Post(

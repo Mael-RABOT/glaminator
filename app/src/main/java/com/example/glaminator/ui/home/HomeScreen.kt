@@ -1,14 +1,8 @@
 package com.example.glaminator.ui.home
 
 import android.content.Intent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -18,8 +12,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -27,7 +19,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
@@ -57,6 +47,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 import com.example.glaminator.ui.post.PostItem
 import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.ui.components.TagSelectionDialog
 import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.theme.ScaffoldBackground
 import com.example.glaminator.ui.theme.titles
@@ -141,53 +132,14 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
             }
         ) { innerPadding ->
             if (showSearchDialog) {
-                AlertDialog(
-                    onDismissRequest = { showSearchDialog = false },
-                    title = { Text("Filter posts by tag") },
-                    text = {
-                        Column {
-                            PostTags.values().forEach { tag ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            selectedTags = if (selectedTags.contains(tag)) {
-                                                selectedTags - tag
-                                            } else {
-                                                selectedTags + tag
-                                            }
-                                        }
-                                        .padding(vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Checkbox(
-                                        checked = selectedTags.contains(tag),
-                                        onCheckedChange = { isChecked ->
-                                            selectedTags = if (isChecked) {
-                                                selectedTags + tag
-                                            } else {
-                                                selectedTags - tag
-                                            }
-                                        }
-                                    )
-                                    Text(text = tag.name, modifier = Modifier.padding(start = 8.dp))
-                                }
-                            }
-                        }
+                TagSelectionDialog(
+                    onDismiss = { showSearchDialog = false },
+                    onConfirm = { 
+                        selectedTags = it
+                        homeViewModel.searchByTags(it.toList())
+                        showSearchDialog = false 
                     },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            homeViewModel.searchByTags(selectedTags.toList())
-                            showSearchDialog = false
-                        }) {
-                            Text("Search")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showSearchDialog = false }) {
-                            Text("Cancel")
-                        }
-                    }
+                    initialSelectedTags = selectedTags
                 )
             }
             SwipeRefresh(

@@ -34,7 +34,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
+import com.example.glaminator.model.PostTags
 import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.ui.components.TagSelectionDialog
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
@@ -56,8 +58,21 @@ class CreatePostActivity : ComponentActivity() {
 fun CreatePostScreen(onPostCreated: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    var showTagDialog by remember { mutableStateOf(false) }
+    var selectedTags by remember { mutableStateOf<Set<PostTags>>(emptySet()) }
     val context = LocalContext.current
     val postRepository = PostRepository()
+
+    if (showTagDialog) {
+        TagSelectionDialog(
+            onDismiss = { showTagDialog = false },
+            onConfirm = { 
+                selectedTags = it
+                showTagDialog = false 
+            },
+            initialSelectedTags = selectedTags
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -98,11 +113,18 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
                 singleLine = false,
                 maxLines = Int.MAX_VALUE
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { showTagDialog = true }) {
+                Text("Select Tags")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Selected Tags: ${selectedTags.joinToString { it.name }}")
+
             Button(
                 onClick = {
                     val userId = CurrentUser.user?.id
                     if (userId != null && ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content)) {
-                        val post = Post(userId = userId, title = title, content = content)
+                        val post = Post(userId = userId, title = title, content = content, tags = selectedTags.toList())
                         postRepository.createPost(post).addOnSuccessListener {
                             Toast.makeText(context, "Post created!", Toast.LENGTH_SHORT).show()
                             onPostCreated()
