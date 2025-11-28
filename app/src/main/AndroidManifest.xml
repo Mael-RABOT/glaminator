@@ -22,6 +22,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.post.CreatePostActivity"
+            android:exported="false"
+            android:label="Create Post"
+            android:theme="@style/Theme.Glaminator" />
+        <activity
+            android:name=".ui.post.PostDetailActivity"
+            android:exported="false"
+            android:label="Post Detail"
+            android:theme="@style/Theme.Glaminator" />
+        <activity
+            android:name=".ui.user.UserManagementActivity"
+            android:exported="false"
+            android:label="User Profile"
+            android:theme="@style/Theme.Glaminator" />
+        <activity
+            android:name=".ui.pull.PullActivity"
+            android:exported="false"
+            android:label="Pull"
+            android.theme="@style/Theme.Glaminator" />
     </application>
 
 </manifest>
