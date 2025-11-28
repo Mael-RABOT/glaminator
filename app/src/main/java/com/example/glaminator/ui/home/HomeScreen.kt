@@ -1,8 +1,14 @@
 package com.example.glaminator.ui.home
 
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -11,9 +17,9 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -22,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -35,20 +40,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
 import com.example.glaminator.model.PostTags
 import com.example.glaminator.ui.post.CreatePostActivity
 import com.example.glaminator.ui.post.PostDetailActivity
-import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
 import com.example.glaminator.ui.user.UserManagementActivity
@@ -60,7 +60,7 @@ import com.example.glaminator.repository.PostRepository
 import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.theme.ScaffoldBackground
 import com.example.glaminator.ui.theme.titles
-import com.example.glaminator.ui.home.HomeViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
@@ -69,7 +69,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
     var isRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var showSearchDialog by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
+    var selectedTags by remember { mutableStateOf<Set<PostTags>>(emptySet()) }
 
     val searchResults by homeViewModel.searchResults.collectAsState()
     val postRepository = remember { PostRepository() }
@@ -105,17 +105,17 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                             Icon(Icons.Filled.CardGiftcard, contentDescription = "Pull", tint = titles)
                         }
                         IconButton(onClick = { showSearchDialog = true }) {
-                            Icon(Icons.Filled.Tag, contentDescription = "Search by Tag", tint = titles)
+                            Icon(Icons.Filled.FilterList, contentDescription = "Filter by Tag", tint = titles)
                         }
                         IconButton(
                             onClick = {
-                                searchQuery = ""
-                                homeViewModel.searchByTag(null)
+                                selectedTags = emptySet()
+                                homeViewModel.searchByTags(emptyList())
                             }
                         ) {
                             Icon(
                                 Icons.Filled.Clear,
-                                contentDescription = "Clear Search",
+                                contentDescription = "Clear Filter",
                                 tint = titles
                             )
                         }
@@ -143,28 +143,49 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
             if (showSearchDialog) {
                 AlertDialog(
                     onDismissRequest = { showSearchDialog = false },
-                    title = { Text("Search posts by tag") },
+                    title = { Text("Filter posts by tag") },
                     text = {
-                        TextField(
-                            value = searchQuery,
-                            onValueChange = { text ->
-                                searchQuery = text
-
-                                val tagEnum = try {
-                                    PostTags.valueOf(text.trim().uppercase())
-                                } catch (_: Exception) {
-                                    null
+                        Column {
+                            PostTags.values().forEach { tag ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedTags = if (selectedTags.contains(tag)) {
+                                                selectedTags - tag
+                                            } else {
+                                                selectedTags + tag
+                                            }
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedTags.contains(tag),
+                                        onCheckedChange = { isChecked ->
+                                            selectedTags = if (isChecked) {
+                                                selectedTags + tag
+                                            } else {
+                                                selectedTags - tag
+                                            }
+                                        }
+                                    )
+                                    Text(text = tag.name, modifier = Modifier.padding(start = 8.dp))
                                 }
-
-                                homeViewModel.searchByTag(tagEnum)
-                            },
-                            placeholder = { Text("Enter tag (e.g. FOOD)") },
-                            singleLine = true
-                        )
+                            }
+                        }
                     },
                     confirmButton = {
+                        TextButton(onClick = {
+                            homeViewModel.searchByTags(selectedTags.toList())
+                            showSearchDialog = false
+                        }) {
+                            Text("Search")
+                        }
+                    },
+                    dismissButton = {
                         TextButton(onClick = { showSearchDialog = false }) {
-                            Text("Close")
+                            Text("Cancel")
                         }
                     }
                 )
@@ -177,7 +198,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     .padding(innerPadding)
             ) {
                 val listToDisplay =
-                    if (searchQuery.isNotBlank()) searchResults else posts
+                    if (selectedTags.isNotEmpty()) searchResults else posts
 
                 if (posts.isEmpty() && !isRefreshing) {
                     Box(
@@ -207,9 +228,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                                         } else {
                                             postRepository.addLikeToPost(post.id, currentUserId)
                                         }
-
                                     }
-
                                 }
                             )
                         }

@@ -6,6 +6,7 @@ enum class PostTags {
     FOOD,
     PLACES
 }
+
 data class Post(
     val id: String = "",
     val userId: String = "",

@@ -29,16 +29,15 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun searchByTag(tag: PostTags?) {
-        if (tag == null) {
+    fun searchByTags(tags: List<PostTags>) {
+        if (tags.isEmpty()) {
             _searchResults.value = emptyList()
             return
         }
 
-        postRepository.searchPostsByTag(tag) { results ->
+        postRepository.searchPostsByTags(tags) { results ->
             _searchResults.value = results
         }
     }
 
 }
-
