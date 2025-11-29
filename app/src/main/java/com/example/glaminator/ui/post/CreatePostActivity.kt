@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Post
 import com.example.glaminator.model.PostTags
@@ -42,7 +46,13 @@ import com.example.glaminator.ui.components.TagSelectionDialog
 import com.example.glaminator.ui.theme.Background
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.Primary
+import com.example.glaminator.ui.theme.ScaffoldBackground
+import com.example.glaminator.ui.theme.titles
 import com.example.glaminator.utils.ValidationUtils
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 
 class CreatePostActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,9 +79,9 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
     if (showTagDialog) {
         TagSelectionDialog(
             onDismiss = { showTagDialog = false },
-            onConfirm = { 
+            onConfirm = {
                 selectedTags = it
-                showTagDialog = false 
+                showTagDialog = false
             },
             initialSelectedTags = selectedTags
         )
@@ -80,14 +90,14 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Post", color = Primary) },
+                title = { Text("Create Post", color = titles) },
                 navigationIcon = {
                     IconButton(onClick = onPostCreated) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Primary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = titles)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Background
+                    containerColor = ScaffoldBackground
                 )
             )
         }
@@ -116,12 +126,36 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
                 singleLine = false,
                 maxLines = Int.MAX_VALUE
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { showTagDialog = true }) {
-                Text("Select Tags")
-            }
+            Spacer(modifier = Modifier.height(16.dp),)
+                Button(onClick = { showTagDialog = true },
+                    shape = CutCornerShape(12.dp),)
+                {
+                    Text("Select Tags",
+                            fontSize = 18.sp
+                    )
+                }
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Selected Tags: ${selectedTags.joinToString { it.name }}")
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                selectedTags.forEach { tag ->
+                    Box(
+                        modifier = Modifier
+                            .background(Primary, shape = CutCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+
+                        Text(
+                            text = "#${tag.name}",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
 
             Button(
                 onClick = {
@@ -146,7 +180,11 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
                 enabled = ValidationUtils.isValidPostTitle(title) && ValidationUtils.isValidPostContent(content),
                 colors = ButtonDefaults.buttonColors(containerColor = Primary)
             ) {
-                Text("Post", color = Color.Black)
+                Text(
+                    text = "Post",
+                    color = Color.White,
+                    fontSize = 24.sp
+                )
             }
         }
     }
