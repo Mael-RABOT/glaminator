@@ -18,7 +18,7 @@ val PrimaryVariant = Color(0xFF357ABD)
 val Secondary = Color(0xFF50E3C2)
 val Background = Color(0xFFFFFFFF)
 
-val ScaffoldBackground = Color(0xFF0E7CBF)
+val ScaffoldBackground = Color(0xFF2155A4)
 
 val titles = Color(0xFFFFFFFF)
 
