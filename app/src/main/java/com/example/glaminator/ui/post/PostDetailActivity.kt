@@ -93,7 +93,7 @@ class PostDetailActivity : ComponentActivity() {
                                         postOwner = snapshot.getValue(User::class.java)
                                     }
 
-                                    override fun onCancelled(error: DatabaseError) {}
+                                    override fun onCancelled(error: DatabaseError) { /* Handle error */ }
                                 })
                         }
                     }
