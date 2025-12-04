@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Comment
 import com.example.glaminator.model.Post
@@ -79,13 +80,25 @@ class PostDetailActivity : ComponentActivity() {
                 val commentRepository = CommentRepository()
                 val rewardRepository = RewardRepository()
                 val context = LocalContext.current
+                var postOwner by remember { mutableStateOf<User?>(null) }
 
                 postRepository.getPost(postId).addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         post = snapshot.getValue(Post::class.java)
+
+                        post?.let { loadedPost ->
+                            UserRepository().getUser(loadedPost.userId)
+                                .addListenerForSingleValueEvent(object : ValueEventListener {
+                                    override fun onDataChange(snapshot: DataSnapshot) {
+                                        postOwner = snapshot.getValue(User::class.java)
+                                    }
+
+                                    override fun onCancelled(error: DatabaseError) {}
+                                })
+                        }
                     }
 
-                    override fun onCancelled(error: DatabaseError) { /* Handle error */ }
+                    override fun onCancelled(error: DatabaseError) {}
                 })
 
                 commentRepository.getCommentsForPost(postId).addValueEventListener(object : ValueEventListener {
@@ -121,6 +134,12 @@ class PostDetailActivity : ComponentActivity() {
                             Column(
                                 modifier = Modifier.wrapContentHeight()
                             ) {
+                                PostHeader(user = postOwner)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Divider(
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                                )
                                 Text(text = p.title, style = MaterialTheme.typography.headlineMedium)
                                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -284,5 +303,16 @@ fun CommentItem(comment: Comment) {
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+@Composable
+private fun PostHeader(user: User?) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = user?.username ?: "Loading...",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp
+        )
     }
 }
