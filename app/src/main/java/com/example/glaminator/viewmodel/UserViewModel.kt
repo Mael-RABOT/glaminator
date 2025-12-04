@@ -69,4 +69,8 @@ class UserViewModel : ViewModel() {
             }
         })
     }
+
+    fun clearError() {
+        _error.value = null
+    }
 }

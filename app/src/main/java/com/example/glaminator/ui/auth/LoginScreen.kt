@@ -62,6 +62,7 @@ fun LoginScreen(userViewModel: UserViewModel = viewModel(), onRegisterClick: () 
     LaunchedEffect(error) {
         if (error != null) {
             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+            userViewModel.clearError()
         }
     }
 
