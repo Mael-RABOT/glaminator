@@ -305,6 +305,7 @@ fun CommentItem(comment: Comment) {
         }
     }
 }
+
 @Composable
 private fun PostHeader(user: User?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
