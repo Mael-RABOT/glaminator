@@ -9,3 +9,5 @@ app/google-services.json
 app/build
 local.properties
 glaminator.jks
+*.jks
+app/release/
