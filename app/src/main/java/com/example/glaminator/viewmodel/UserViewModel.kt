@@ -56,4 +56,21 @@ class UserViewModel : ViewModel() {
             }
         }
     }
+
+    fun loadUserById(userId: String) {
+        userRepository.getUser(userId).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val user = snapshot.getValue(User::class.java)
+                _user.value = user
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                _error.value = error.message
+            }
+        })
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
 }
