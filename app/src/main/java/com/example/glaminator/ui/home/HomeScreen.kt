@@ -89,16 +89,12 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(text = CurrentUser.user?.username ?: "Glaminator", color = titles,  fontWeight = FontWeight.Bold) },
-                    navigationIcon = {
-                        IconButton(onClick = { context.startActivity(Intent(context, UserManagementActivity::class.java)) }) {
-                            Icon(Icons.Filled.AccountCircle, contentDescription = "Account", tint = titles)
-                        }
+                    title = {
+                        Text(text = CurrentUser.user?.username ?: "Glaminator",
+                            color = titles,
+                            fontWeight = FontWeight.Bold)
                     },
                     actions = {
-                        IconButton(onClick = { context.startActivity(Intent(context, PullActivity::class.java)) }) {
-                            Icon(Icons.Filled.CardGiftcard, contentDescription = "Pull", tint = titles)
-                        }
                         IconButton(onClick = { showSearchDialog = true }) {
                             Icon(Icons.Filled.FilterList, contentDescription = "Filter by Tag", tint = titles)
                         }
@@ -120,20 +116,6 @@ fun HomeScreen(homeViewModel: HomeViewModel = viewModel()) {
                     )
                 )
             },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        context.startActivity(Intent(context, CreatePostActivity::class.java))
-                    },
-                    containerColor = Primary
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "Make a Post",
-                        tint = titles
-                    )
-                }
-            }
         ) { innerPadding ->
             if (showSearchDialog) {
                 TagSelectionDialog(

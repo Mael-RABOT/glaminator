@@ -97,9 +97,6 @@ fun UserManagementScreen() {
     }
 
     val user = CurrentUser.user
-    val postCount = user?.rewards?.find { it.type == RewardType.POST }?.quantity ?: 0
-    val likeCount = user?.rewards?.find { it.type == RewardType.LIKE }?.quantity ?: 0
-    val commentCount = user?.rewards?.find { it.type == RewardType.COMMENT }?.quantity ?: 0
 
     Scaffold(
         topBar = {
@@ -128,7 +125,7 @@ fun UserManagementScreen() {
                     text = "Welcome $currentUsername",
                     style = MaterialTheme.typography.headlineSmall
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             item {
@@ -250,21 +247,6 @@ fun UserManagementScreen() {
                 }
             }
 
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Your Rewards", style = MaterialTheme.typography.titleLarge)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        StatisticItem(icon = Icons.Filled.Description, label = "Posts", value = postCount)
-                        StatisticItem(icon = Icons.Filled.Favorite, label = "Likes", value = likeCount)
-                        StatisticItem(icon = Icons.Filled.Comment, label = "Comments", value = commentCount)
-                    }
-                }
-            }
-
             // Delete Account Section
             item {
                 Card(
@@ -346,22 +328,6 @@ fun UserManagementScreen() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun StatisticItem(icon: ImageVector, label: String, value: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(text = value.toString(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
 
