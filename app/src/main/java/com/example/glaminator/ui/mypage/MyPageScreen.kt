@@ -48,7 +48,8 @@ fun MyPageScreen(
     val context = LocalContext.current
     val activity = context as ComponentActivity
     val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
-    val currentUser by userViewModel.user.collectAsState()
+    val currentUser = CurrentUser.user
+
     val myPosts by myPageViewModel.myPosts.collectAsState()
 
     val postCount = currentUser?.rewards?.find { it.type == RewardType.POST }?.quantity ?: 0
