@@ -46,6 +46,7 @@ import com.example.glaminator.ui.post.CreatePostScreen
 import com.example.glaminator.ui.pull.PullActivity
 import com.example.glaminator.ui.pull.PullScreen
 import com.example.glaminator.ui.theme.GlaminatorTheme
+import com.example.glaminator.ui.theme.Primary
 import com.example.glaminator.ui.theme.ScaffoldBackground
 import com.example.glaminator.ui.theme.titles
 import com.example.glaminator.viewmodel.UserViewModel
@@ -153,8 +154,8 @@ fun MainScreen(userViewModel: UserViewModel) {
                                     launchSingleTop = true
                                 }
                             },
-                            selectedContentColor = titles,
-                            unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                            selectedContentColor = Primary,
+                            unselectedContentColor = titles
                         )
                     }
                 }
