@@ -53,6 +53,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.font.FontWeight
 
 class CreatePostActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,12 +91,7 @@ fun CreatePostScreen(onPostCreated: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Post", color = titles) },
-                navigationIcon = {
-                    IconButton(onClick = onPostCreated) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = titles)
-                    }
-                },
+                title = { Text("Create Post", color = titles, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = ScaffoldBackground
                 )

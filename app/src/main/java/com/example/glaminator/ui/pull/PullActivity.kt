@@ -46,13 +46,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.glaminator.data.CurrentUser
 import com.example.glaminator.model.Reward
 import com.example.glaminator.repository.RewardRepository
 import com.example.glaminator.ui.theme.GlaminatorTheme
 import com.example.glaminator.ui.theme.ScaffoldBackground
 import com.example.glaminator.ui.theme.Surface
 import com.example.glaminator.ui.theme.titles
+import com.example.glaminator.viewmodel.UserViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -77,7 +80,6 @@ class PullActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PullScreen() {
-    val activity = (LocalContext.current as? Activity)
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("glaminator_prefs", Context.MODE_PRIVATE) }
     val rewardRepository = remember { RewardRepository() }
@@ -91,6 +93,13 @@ fun PullScreen() {
         mutableLongStateOf(sharedPreferences.getLong("last_pull_timestamp", 0L))
     }
     var cooldownRemaining by remember { mutableLongStateOf(0L) }
+
+    val activity = context as ComponentActivity
+    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
+    val userId = CurrentUser.user?.id
+    if (userId != null) {
+        userViewModel.loadUserById(userId)
+    }
 
     LaunchedEffect(Unit, lastPullTimestamp) {
         val cooldownMillis = PULL_COOLDOWN_MINUTES * 60 * 1000L
@@ -124,12 +133,7 @@ fun PullScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gacha Pull", color = titles,  fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { activity?.finish() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = titles)
-                    }
-                },
+                title = { Text("Gacha Pull", color = titles, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = ScaffoldBackground
                 )
@@ -197,6 +201,11 @@ fun PullScreen() {
                                 val generatedReward = rewardRepository.generateReward()
                                 reward = generatedReward
                                 rewardRepository.claimReward(context, generatedReward)
+
+                                val userId = CurrentUser.user?.id
+                                if (userId != null) {
+                                    userViewModel.loadUserById(userId)
+                                }
                             }
                         },
                     contentAlignment = Alignment.Center
