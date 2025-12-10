@@ -1,6 +1,7 @@
 package com.example.glaminator.ui.mypage
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +11,8 @@ import androidx.compose.material.icons.filled.Comment
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
+import com.example.glaminator.repository.PostRepository
+import com.example.glaminator.repository.RewardRepository
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -46,9 +50,9 @@ fun MyPageScreen(
     myPageViewModel: MyPageViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    val activity = context as ComponentActivity
-    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
     val currentUser = CurrentUser.user
+    val postRepository = remember { PostRepository() }
+    val rewardRepository = remember { RewardRepository() }
 
     val myPosts by myPageViewModel.myPosts.collectAsState()
 
@@ -150,6 +154,7 @@ fun MyPageScreen(
                     Text("You haven't created any posts yet!")
                 }
             } else {
+                val currentUserId = CurrentUser.user?.id
                 items(items = myPosts, key = { post -> post.id }) { post ->
                     PostItem(
                         post = post,
@@ -160,7 +165,25 @@ fun MyPageScreen(
                         },
                         isLiked = currentUser?.id in post.likes,
                         onLikeClicked = {
-                            myPageViewModel.toggleLike(post.id, post.likes)
+                            if (currentUserId != null) {
+                                if (currentUserId in post.likes) {
+                                    postRepository.removeLikeFromPost(post.id, currentUserId)
+                                    rewardRepository.claimReward(
+                                        context,
+                                        com.example.glaminator.model.Reward(
+                                            type = RewardType.LIKE,
+                                            quantity = 1,
+                                            rarity = com.example.glaminator.model.Rarity.COMMON
+                                        )
+                                    )
+                                } else {
+                                    if (rewardRepository.consumeReward(context, RewardType.LIKE, 1)) {
+                                        postRepository.addLikeToPost(post.id, currentUserId)
+                                    } else {
+                                        Toast.makeText(context, "You don't have enough rewards to like.", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
                         }
                     )
                 }
